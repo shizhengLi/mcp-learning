@@ -94,7 +94,17 @@ describe('AIModelManager Tests', () => {
       const context: AIContext = {
         language: 'python',
         code: 'def test(): pass',
-        metrics: { complexity: 5, maintainability: 80 }
+        metrics: { 
+          complexity: 5, 
+          maintainability: 80,
+          linesOfCode: 25,
+          commentLines: 5,
+          commentPercentage: 20,
+          functionCount: 2,
+          averageFunctionLength: 12.5,
+          dependencies: [],
+          technicalDebt: 10
+        }
       };
 
       // Mock private method for testing

@@ -1,4 +1,4 @@
-import { BaseCodeAnalyzer, AnalysisResult, AnalysisOptions, CodeMetrics, Issue, RefactoringSuggestion } from './BaseCodeAnalyzer';
+import { BaseCodeAnalyzer, AnalysisResult, AnalysisOptions, CodeMetrics, AnalysisIssue as Issue, RefactoringSuggestion } from './BaseCodeAnalyzer';
 
 export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
   protected language: string;
@@ -31,7 +31,7 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     this.config = config;
   }
 
-  public getSupportedLanguages(): string[] {
+  public override getSupportedLanguages(): string[] {
     return [this.language];
   }
 
@@ -40,20 +40,23 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
   }
 
   protected applyLanguageSpecificThresholds(options: AnalysisOptions): AnalysisOptions {
+    const baseThresholds = options.thresholds || {};
+    
     return {
       ...options,
       thresholds: {
         complexity: {
-          high: this.config.complexity.high,
-          medium: this.config.complexity.medium,
-          ...options.thresholds?.complexity
+          high: baseThresholds.complexity?.high ?? this.config.complexity.high,
+          medium: baseThresholds.complexity?.medium ?? this.config.complexity.medium,
+          low: baseThresholds.complexity?.low ?? 1
         },
         maintainability: {
-          poor: this.config.maintainability.poor,
-          fair: this.config.maintainability.fair,
-          ...options.thresholds?.maintainability
+          poor: baseThresholds.maintainability?.poor ?? this.config.maintainability.poor,
+          fair: baseThresholds.maintainability?.fair ?? this.config.maintainability.fair,
+          good: baseThresholds.maintainability?.good ?? 70,
+          excellent: baseThresholds.maintainability?.excellent ?? 85
         },
-        ...options.thresholds
+        coverage: baseThresholds.coverage ?? { poor: 40, fair: 60, good: 80, excellent: 90 }
       },
       rules: options.rules || this.defaultRules
     };
@@ -88,7 +91,7 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     estimatedImpact: {
       complexityReduction?: number;
       maintainabilityImprovement?: number;
-      performanceImprovement?: number;
+      performanceImprovement?: string;
     }
   ): RefactoringSuggestion {
     return {
@@ -193,7 +196,7 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     return issues;
   }
 
-  public async analyzeFile(filePath: string, options: AnalysisOptions = {}): Promise<AnalysisResult> {
+  public override async analyzeFile(filePath: string, options: AnalysisOptions = {}): Promise<AnalysisResult> {
     const languageOptions = this.applyLanguageSpecificThresholds(options);
     const code = await this.readFile(filePath);
 
@@ -208,7 +211,7 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     const filteredIssues = allIssues.filter(issue => {
       if (languageOptions.thresholds?.complexity) {
         if (issue.rule === 'COMPLEXITY_HIGH' && issue.severity === 'high') {
-          return metrics.complexity > languageOptions.thresholds.complexity.high;
+          return metrics.complexity > (languageOptions.thresholds.complexity?.high ?? 10);
         }
       }
       return true;
