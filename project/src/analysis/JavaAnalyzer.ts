@@ -1,5 +1,5 @@
 import { BaseLanguageAnalyzer } from './BaseLanguageAnalyzer';
-import { CodeMetrics, RefactoringSuggestion, AnalysisIssue } from './BaseCodeAnalyzer';
+import { CodeMetrics, RefactoringSuggestion, AnalysisIssue as Issue } from './BaseCodeAnalyzer';
 
 export class JavaAnalyzer extends BaseLanguageAnalyzer {
   constructor() {
@@ -19,8 +19,8 @@ export class JavaAnalyzer extends BaseLanguageAnalyzer {
         'COLLECTION_USAGE'
       ],
       {
-        complexity: { high: 15, medium: 8 },
-        maintainability: { poor: 40, fair: 65 }
+        complexity: { high: 15, medium: 8, low: 1 },
+        maintainability: { poor: 40, fair: 65, good: 80, excellent: 90 }
       }
     );
   }
@@ -38,7 +38,7 @@ export class JavaAnalyzer extends BaseLanguageAnalyzer {
       }
       
       // Logical operators
-      if (trimmed.match/(&&|\|\|)/)) {
+      if (trimmed.match(/(&&|\|\|)/)) {
         complexity += 0.5;
       }
       
@@ -287,8 +287,8 @@ class User {
       }
 
       // Check method names (camelCase)
-      const methodMatch = line.match/(?:public|private|protected)\s+\w+\s+(\w+)\s*\(/);
-      if (methodMatch && !/^[a-z]/.test(methodMatch[1]) && !methodMatch[1].matches(/^[A-Z_]+$/)) {
+      const methodMatch = line.match(/(?:public|private|protected)\s+\w+\s+(\w+)\s*\(/);
+      if (methodMatch && !/^[a-z]/.test(methodMatch[1]) && !methodMatch[1].match(/^[A-Z_]+$/)) {
         issues.push(this.createIssue(
           'warning',
           'medium',
@@ -302,8 +302,8 @@ class User {
       }
 
       // Check variable names (camelCase)
-      const varMatch = line.match/(?:\w+)\s+(\w+)\s*=/);
-      if (varMatch && !/^[a-z]/.test(varMatch[1]) && !varMatch[1].matches(/^[A-Z_]+$/)) {
+      const varMatch = line.match(/(?:\w+)\s+(\w+)\s*=/);
+      if (varMatch && !/^[a-z]/.test(varMatch[1]) && !varMatch[1].match(/^[A-Z_]+$/)) {
         issues.push(this.createIssue(
           'warning',
           'low',

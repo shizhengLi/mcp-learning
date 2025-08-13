@@ -1,4 +1,4 @@
-import { QualityMetrics, TechnicalDebtItem, QualityRecommendation, QualityThresholds } from './QualityMetricsCalculator';
+import { QualityMetrics, QualityRecommendation } from './QualityMetricsCalculator';
 import { TechnicalDebtAnalysis } from './TechnicalDebtAnalyzer';
 
 export interface QualityScore {
@@ -54,7 +54,7 @@ export interface QualityReport {
     team: number;
   };
   metrics: QualityMetrics;
-  debtAnalysis?: TechnicalDebtAnalysis;
+  debtAnalysis: TechnicalDebtAnalysis | undefined;
   recommendations: QualityRecommendation[];
   history: QualityHistory[];
   nextSteps: string[];
@@ -375,7 +375,7 @@ export class QualityScorer {
   }
 
   private calculateBenchmark(
-    overallScore: number,
+    _overallScore: number,
     metrics: QualityMetrics
   ): QualityScore['benchmark'] {
     const industryBenchmark = this.benchmarks.find(b => b.category === 'overall')?.score || 72;
@@ -401,7 +401,7 @@ export class QualityScorer {
     return Math.min(100, Math.max(50, benchmark));
   }
 
-  private calculateTeamBenchmark(metrics: QualityMetrics): number {
+  private calculateTeamBenchmark(_metrics: QualityMetrics): number {
     // Calculate team-specific benchmark based on historical performance
     // This would typically be based on team's historical quality data
     return 78; // Default team benchmark
@@ -561,7 +561,7 @@ export class QualityScorer {
 
   private generateReportRecommendations(
     score: QualityScore,
-    metrics: QualityMetrics
+    _metrics: QualityMetrics
   ): QualityRecommendation[] {
     const recommendations: QualityRecommendation[] = [];
 

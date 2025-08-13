@@ -19,56 +19,41 @@ export interface QualityMetrics extends CodeMetrics {
   
   // Design Metrics
   depthOfInheritance: number;
-  classCoupling: number;
-  lackOfCohesion: number;
-  weightedMethodsPerClass: number;
   
   // Code Style Metrics
   lineLength: {
     average: number;
     max: number;
-    min: number;
-    standardDeviation: number;
+    linesOverLimit: number;
   };
   namingConventionScore: number;
   commentQualityScore: number;
-  documentationScore: number;
   
   // Technical Debt Metrics
   technicalDebtRatio: number;
   codeSmells: number;
-  codeChurn: {
-    recentChanges: number;
-    changeFrequency: number;
-  };
   duplicationRatio: number;
   
   // Performance Metrics
   algorithmicComplexity: string;
-  memoryUsage: {
-    estimated: number;
-    efficiency: number;
-  };
-  timeComplexity: string;
+  memoryUsage: number;
   
   // Security Metrics
   securityIssues: number;
   vulnerabilityScore: number;
-  inputValidationScore: number;
   
   // Test Coverage Metrics
   testCoverage: number;
   testQualityScore: number;
-  testMaintainability: number;
   
   // Overall Quality Score
   overallQualityScore: number;
   qualityGrade: 'A' | 'B' | 'C' | 'D' | 'F';
   qualityTrend: 'improving' | 'stable' | 'declining';
   
-  // Timestamps
-  calculatedAt: Date;
-  previousMetrics?: QualityMetrics;
+  // Additional Metrics
+  errorHandlingScore: number;
+  resourceManagementScore: number;
 }
 
 export interface TechnicalDebtItem {

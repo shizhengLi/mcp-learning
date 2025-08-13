@@ -1,4 +1,4 @@
-import { BaseCodeAnalyzer, AnalysisResult, AnalysisOptions, CodeMetrics, Issue, RefactoringSuggestion } from './BaseCodeAnalyzer';
+import { BaseCodeAnalyzer, AnalysisResult, AnalysisOptions, CodeMetrics } from './BaseCodeAnalyzer';
 
 export interface LanguageConfig {
   name: string;
@@ -9,10 +9,13 @@ export interface LanguageConfig {
     complexity: {
       high: number;
       medium: number;
+      low: number;
     };
     maintainability: {
       poor: number;
       fair: number;
+      good: number;
+      excellent: number;
     };
   };
 }
@@ -414,7 +417,7 @@ export class MultiLanguageFramework {
     return this.languages.has(language);
   }
 
-  private getAnalyzer(language: string): BaseCodeAnalyzer | null {
+  private getAnalyzer(_language: string): BaseCodeAnalyzer | null {
     // This would be implemented to dynamically load analyzers
     // For now, return null to indicate analyzer needs to be set
     return null;
@@ -432,8 +435,8 @@ export class MultiLanguageFramework {
     extensions: string[];
     defaultRules: string[];
     metrics: {
-      complexity: { high: number; medium: number };
-      maintainability: { poor: number; fair: number };
+      complexity: { high: number; medium: number; low: number };
+      maintainability: { poor: number; fair: number; good: number; excellent: number };
     };
   } | null {
     const config = this.getLanguageConfig(language);

@@ -8,10 +8,13 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     complexity: {
       high: number;
       medium: number;
+      low: number;
     };
     maintainability: {
       poor: number;
       fair: number;
+      good: number;
+      excellent: number;
     };
   };
 
@@ -20,8 +23,8 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     extensions: string[],
     defaultRules: string[],
     config: {
-      complexity: { high: number; medium: number };
-      maintainability: { poor: number; fair: number };
+      complexity: { high: number; medium: number; low: number };
+      maintainability: { poor: number; fair: number; good: number; excellent: number };
     }
   ) {
     super();
@@ -46,15 +49,15 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
       ...options,
       thresholds: {
         complexity: {
-          high: baseThresholds.complexity?.high ?? this.config.complexity.high,
-          medium: baseThresholds.complexity?.medium ?? this.config.complexity.medium,
-          low: baseThresholds.complexity?.low ?? 1
+          high: typeof baseThresholds.complexity === 'object' && 'high' in baseThresholds.complexity ? baseThresholds.complexity.high : this.config.complexity.high,
+          medium: typeof baseThresholds.complexity === 'object' && 'medium' in baseThresholds.complexity ? baseThresholds.complexity.medium : this.config.complexity.medium,
+          low: typeof baseThresholds.complexity === 'object' && 'low' in baseThresholds.complexity ? baseThresholds.complexity.low : this.config.complexity.low
         },
         maintainability: {
-          poor: baseThresholds.maintainability?.poor ?? this.config.maintainability.poor,
-          fair: baseThresholds.maintainability?.fair ?? this.config.maintainability.fair,
-          good: baseThresholds.maintainability?.good ?? 70,
-          excellent: baseThresholds.maintainability?.excellent ?? 85
+          poor: typeof baseThresholds.maintainability === 'object' && 'poor' in baseThresholds.maintainability ? baseThresholds.maintainability.poor : this.config.maintainability.poor,
+          fair: typeof baseThresholds.maintainability === 'object' && 'fair' in baseThresholds.maintainability ? baseThresholds.maintainability.fair : this.config.maintainability.fair,
+          good: typeof baseThresholds.maintainability === 'object' && 'good' in baseThresholds.maintainability ? baseThresholds.maintainability.good : this.config.maintainability.good,
+          excellent: typeof baseThresholds.maintainability === 'object' && 'excellent' in baseThresholds.maintainability ? baseThresholds.maintainability.excellent : this.config.maintainability.excellent
         },
         coverage: baseThresholds.coverage ?? { poor: 40, fair: 60, good: 80, excellent: 90 }
       },
@@ -70,7 +73,7 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     rule: string,
     fix?: {
       description: string;
-      code?: string;
+      replacement?: string;
     }
   ): Issue {
     return {
@@ -103,8 +106,8 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     };
   }
 
-  protected abstract calculateComplexity(code: string): number;
-  protected abstract calculateMaintainability(metrics: CodeMetrics): number;
+  protected abstract override calculateComplexity(code: string): number;
+  protected abstract override calculateMaintainability(metrics: CodeMetrics): number;
   protected abstract analyzeCodeStructure(code: string): {
     functions: Array<{ name: string; line: number; complexity: number }>;
     classes: Array<{ name: string; line: number; methods: number }>;
@@ -210,8 +213,12 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     // Apply thresholds
     const filteredIssues = allIssues.filter(issue => {
       if (languageOptions.thresholds?.complexity) {
+        const complexityThreshold = typeof languageOptions.thresholds.complexity === 'number' 
+          ? languageOptions.thresholds.complexity 
+          : languageOptions.thresholds.complexity.high;
+        
         if (issue.rule === 'COMPLEXITY_HIGH' && issue.severity === 'high') {
-          return metrics.complexity > (languageOptions.thresholds.complexity?.high ?? 10);
+          return metrics.complexity > (complexityThreshold ?? 10);
         }
       }
       return true;
@@ -227,7 +234,7 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     };
   }
 
-  protected abstract readFile(filePath: string): Promise<string>;
+  protected abstract override readFile(filePath: string): Promise<string>;
 
   // Utility methods for common patterns
   protected extractFunctions(code: string, pattern: RegExp): Array<{ name: string; line: number; complexity: number }> {

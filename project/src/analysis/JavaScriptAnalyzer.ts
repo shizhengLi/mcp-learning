@@ -223,7 +223,9 @@ export class JavaScriptAnalyzer extends BaseCodeAnalyzer {
     options: AnalysisOptions
   ): AnalysisIssue[] {
     const issues: AnalysisIssue[] = [];
-    const threshold = options.thresholds?.complexity || 10;
+    const threshold = typeof options.thresholds?.complexity === 'number' 
+      ? options.thresholds.complexity 
+      : options.thresholds?.complexity?.high || 10;
 
     if (complexity > threshold) {
       issues.push({

@@ -47,9 +47,9 @@ export interface RefactoringSuggestion {
 export interface AnalysisOptions {
   rules?: string[] | undefined;
   thresholds?: {
-    complexity?: number | undefined;
-    maintainability?: number | undefined;
-    coverage?: number | undefined;
+    complexity?: number | { high: number; medium: number; low: number } | undefined;
+    maintainability?: number | { poor: number; fair: number; good: number; excellent: number } | undefined;
+    coverage?: number | { poor: number; fair: number; good: number; excellent: number } | undefined;
   } | undefined;
   includeSuggestions?: boolean | undefined;
   skipDependencies?: boolean | undefined;
@@ -173,16 +173,29 @@ export abstract class BaseCodeAnalyzer {
 
   protected validateOptions(options: AnalysisOptions): void {
     if (options.thresholds) {
-      if (options.thresholds.complexity !== undefined && options.thresholds.complexity < 1) {
-        throw new Error('Complexity threshold must be at least 1');
+      if (options.thresholds.complexity !== undefined) {
+        const complexityValue = typeof options.thresholds.complexity === 'number' 
+          ? options.thresholds.complexity 
+          : Math.min(...Object.values(options.thresholds.complexity));
+        if (complexityValue < 1) {
+          throw new Error('Complexity threshold must be at least 1');
+        }
       }
-      if (options.thresholds.maintainability !== undefined && 
-          (options.thresholds.maintainability < 0 || options.thresholds.maintainability > 100)) {
-        throw new Error('Maintainability threshold must be between 0 and 100');
+      if (options.thresholds.maintainability !== undefined) {
+        const maintainabilityValue = typeof options.thresholds.maintainability === 'number' 
+          ? options.thresholds.maintainability 
+          : Math.min(...Object.values(options.thresholds.maintainability));
+        if (maintainabilityValue < 0 || maintainabilityValue > 100) {
+          throw new Error('Maintainability threshold must be between 0 and 100');
+        }
       }
-      if (options.thresholds.coverage !== undefined && 
-          (options.thresholds.coverage < 0 || options.thresholds.coverage > 100)) {
-        throw new Error('Coverage threshold must be between 0 and 100');
+      if (options.thresholds.coverage !== undefined) {
+        const coverageValue = typeof options.thresholds.coverage === 'number' 
+          ? options.thresholds.coverage 
+          : Math.min(...Object.values(options.thresholds.coverage));
+        if (coverageValue < 0 || coverageValue > 100) {
+          throw new Error('Coverage threshold must be between 0 and 100');
+        }
       }
     }
   }

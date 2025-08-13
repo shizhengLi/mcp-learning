@@ -19,8 +19,8 @@ export class TypeScriptAnalyzer extends BaseLanguageAnalyzer {
         'DECORATORS'
       ],
       {
-        complexity: { high: 9, medium: 5 },
-        maintainability: { poor: 55, fair: 75 }
+        complexity: { high: 9, medium: 5, low: 1 },
+        maintainability: { poor: 55, fair: 75, good: 85, excellent: 95 }
       }
     );
   }
