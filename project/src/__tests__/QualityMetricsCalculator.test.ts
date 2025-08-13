@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { QualityMetricsCalculator } from '../analysis/QualityMetricsCalculator';
 import { TechnicalDebtAnalyzer } from '../analysis/TechnicalDebtAnalyzer';
-import { QualityMetrics, TechnicalDebtItem, QualityThresholds } from '../analysis/QualityMetricsCalculator';
+import { QualityMetrics, QualityThresholds } from '../analysis/QualityMetricsCalculator';
 
 describe('QualityMetricsCalculator Tests', () => {
   let calculator: QualityMetricsCalculator;
@@ -222,7 +222,6 @@ class Service {
 
       expect(metrics.coupling).toBeGreaterThan(0);
       expect(metrics.cohesion).toBeGreaterThan(0);
-      expect(metrics.classCoupling).toBeGreaterThan(0);
     });
 
     it('should detect high coupling', async () => {
@@ -268,7 +267,7 @@ function test() {
 
       expect(metrics.lineLength.average).toBeGreaterThan(0);
       expect(metrics.lineLength.max).toBeGreaterThan(80);
-      expect(metrics.lineLength.standardDeviation).toBeGreaterThan(0);
+      expect(metrics.lineLength.linesOverLimit).toBe(0);
     });
 
     it('should score naming conventions', async () => {
@@ -323,7 +322,6 @@ function fact(n) {
       const poorlyCommentedMetrics = await calculator.calculateQualityMetrics(poorlyCommented, 'javascript', 'poor.js');
 
       expect(wellCommentedMetrics.commentQualityScore).toBeGreaterThan(poorlyCommentedMetrics.commentQualityScore);
-      expect(wellCommentedMetrics.documentationScore).toBeGreaterThan(poorlyCommentedMetrics.documentationScore);
     });
   });
 
@@ -426,8 +424,7 @@ function createLargeArray() {
 
       const metrics = await calculator.calculateQualityMetrics(memoryIntensiveCode, 'javascript', 'test.js');
 
-      expect(metrics.memoryUsage.estimated).toBeGreaterThan(0);
-      expect(metrics.memoryUsage.efficiency).toBeLessThan(100);
+      expect(metrics.memoryUsage).toBeGreaterThan(0);
     });
   });
 
@@ -454,7 +451,6 @@ function processUserInput(input) {
 
       expect(metrics.securityIssues).toBeGreaterThan(0);
       expect(metrics.vulnerabilityScore).toBeGreaterThan(0);
-      expect(metrics.inputValidationScore).toBe(0);
     });
 
     it('should score secure code higher', async () => {
@@ -487,7 +483,6 @@ function processUserInput(input) {
 
       expect(secureMetrics.securityIssues).toBeLessThan(vulnerableMetrics.securityIssues);
       expect(secureMetrics.vulnerabilityScore).toBeLessThan(vulnerableMetrics.vulnerabilityScore);
-      expect(secureMetrics.inputValidationScore).toBeGreaterThan(vulnerableMetrics.inputValidationScore);
     });
   });
 
@@ -626,30 +621,23 @@ function x(y) {
         coupling: 0,
         cohesion: 100,
         depthOfInheritance: 0,
-        classCoupling: 0,
-        lackOfCohesion: 0,
-        weightedMethodsPerClass: 0,
-        lineLength: { average: 20, max: 30, min: 10, standardDeviation: 5 },
+        lineLength: { average: 20, max: 30, linesOverLimit: 0 },
         namingConventionScore: 100,
         commentQualityScore: 80,
-        documentationScore: 90,
         technicalDebtRatio: 0,
         codeSmells: 0,
-        codeChurn: { recentChanges: 0, changeFrequency: 0 },
         duplicationRatio: 0,
         algorithmicComplexity: 'O(1)',
-        memoryUsage: { estimated: 10, efficiency: 95 },
-        timeComplexity: 'O(1)',
+        memoryUsage: 10,
         securityIssues: 0,
         vulnerabilityScore: 0,
-        inputValidationScore: 100,
         testCoverage: 90,
         testQualityScore: 85,
-        testMaintainability: 90,
         overallQualityScore: 85,
         qualityGrade: 'B',
         qualityTrend: 'stable',
-        calculatedAt: new Date()
+        errorHandlingScore: 80,
+        resourceManagementScore: 75
       };
 
       const metrics = await calculator.calculateQualityMetrics(currentCode, 'javascript', 'test.js', previousMetrics);

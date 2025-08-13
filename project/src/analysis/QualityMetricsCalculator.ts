@@ -217,7 +217,7 @@ export class QualityMetricsCalculator {
   async calculateQualityMetrics(
     code: string,
     language: string,
-    filePath: string,
+    _filePath: string,
     previousMetrics?: QualityMetrics
   ): Promise<QualityMetrics> {
     const baseMetrics = this.calculateBaseMetrics(code, language);
@@ -256,31 +256,23 @@ export class QualityMetricsCalculator {
       coupling: designMetrics.coupling,
       cohesion: designMetrics.cohesion,
       depthOfInheritance: designMetrics.depthOfInheritance,
-      classCoupling: designMetrics.classCoupling,
-      lackOfCohesion: designMetrics.lackOfCohesion,
-      weightedMethodsPerClass: designMetrics.weightedMethodsPerClass,
       lineLength: styleMetrics.lineLength,
       namingConventionScore: styleMetrics.namingConventionScore,
       commentQualityScore: styleMetrics.commentQualityScore,
-      documentationScore: styleMetrics.documentationScore,
       technicalDebtRatio: technicalDebtMetrics.technicalDebtRatio,
       codeSmells: technicalDebtMetrics.codeSmells,
-      codeChurn: technicalDebtMetrics.codeChurn,
       duplicationRatio: technicalDebtMetrics.duplicationRatio,
       algorithmicComplexity: performanceMetrics.algorithmicComplexity,
       memoryUsage: performanceMetrics.memoryUsage,
-      timeComplexity: performanceMetrics.timeComplexity,
       securityIssues: securityMetrics.securityIssues,
       vulnerabilityScore: securityMetrics.vulnerabilityScore,
-      inputValidationScore: securityMetrics.inputValidationScore,
       testCoverage: testMetrics.testCoverage,
       testQualityScore: testMetrics.testQualityScore,
-      testMaintainability: testMetrics.testMaintainability,
       overallQualityScore: overallScore,
       qualityGrade,
       qualityTrend,
-      calculatedAt: new Date(),
-      previousMetrics
+      errorHandlingScore: this.calculateErrorHandlingScore(code, language),
+      resourceManagementScore: this.calculateResourceManagementScore(code, language)
     };
   }
 
@@ -367,18 +359,17 @@ export class QualityMetricsCalculator {
     const lineLengths = code.split('\n').map(line => line.length);
     const avgLineLength = lineLengths.reduce((a, b) => a + b, 0) / lineLengths.length;
     const maxLineLength = Math.max(...lineLengths);
-    const minLineLength = Math.min(...lineLengths);
+    // const minLineLength = Math.min(...lineLengths); // Unused variable
     
     // Calculate standard deviation
-    const variance = lineLengths.reduce((acc, len) => acc + Math.pow(len - avgLineLength, 2), 0) / lineLengths.length;
-    const stdDev = Math.sqrt(variance);
+    // const variance = lineLengths.reduce((acc, len) => acc + Math.pow(len - avgLineLength, 2), 0) / lineLengths.length;
+    // const stdDev = Math.sqrt(variance); // Unused variable
 
     return {
       lineLength: {
         average: Math.round(avgLineLength * 100) / 100,
         max: maxLineLength,
-        min: minLineLength,
-        standardDeviation: Math.round(stdDev * 100) / 100
+        linesOverLimit: lineLengths.filter(len => len > 80).length
       },
       namingConventionScore: this.calculateNamingConventionScore(code, language),
       commentQualityScore: this.calculateCommentQualityScore(code, language),
@@ -478,7 +469,7 @@ export class QualityMetricsCalculator {
   }
 
   // Helper methods (simplified implementations)
-  private extractCommentLines(code: string, language: string): string[] {
+  private extractCommentLines(code: string, _language: string): string[] {
     const lines = code.split('\n');
     const commentLines: string[] = [];
     
@@ -496,7 +487,7 @@ export class QualityMetricsCalculator {
     return commentLines;
   }
 
-  private calculateBasicComplexity(code: string, language: string): number {
+  private calculateBasicComplexity(code: string, _language: string): number {
     let complexity = 1;
     const lines = code.split('\n');
     
@@ -576,7 +567,7 @@ export class QualityMetricsCalculator {
     return [...new Set(matches)];
   }
 
-  private estimateBasicTechnicalDebt(code: string, language: string): number {
+  private estimateBasicTechnicalDebt(code: string, _language: string): number {
     let debt = 0;
     const lines = code.split('\n');
     
@@ -608,7 +599,7 @@ export class QualityMetricsCalculator {
     return operands;
   }
 
-  private calculateCyclomaticComplexity(code: string, language: string): number {
+  private calculateCyclomaticComplexity(code: string, _language: string): number {
     // More detailed cyclomatic complexity calculation
     let complexity = 1; // base complexity
     
@@ -622,7 +613,7 @@ export class QualityMetricsCalculator {
     return Math.round(complexity);
   }
 
-  private calculateCognitiveComplexity(code: string, language: string): number {
+  private calculateCognitiveComplexity(code: string, _language: string): number {
     // Cognitive complexity focuses on readability and mental effort
     let complexity = 0;
     const lines = code.split('\n');
@@ -669,7 +660,7 @@ export class QualityMetricsCalculator {
     return Math.round(cohesionScore);
   }
 
-  private calculateDepthOfInheritance(code: string, language: string): number {
+  private calculateDepthOfInheritance(code: string, _language: string): number {
     // Simplified - would need AST analysis for accurate calculation
     const extendsMatches = code.match(/\bextends\b/g) || [];
     const implementsMatches = code.match(/\bimplements\b/g) || [];
@@ -677,12 +668,12 @@ export class QualityMetricsCalculator {
     return extendsMatches.length + implementsMatches.length;
   }
 
-  private calculateClassCoupling(code: string, language: string): number {
+  private calculateClassCoupling(code: string, _language: string): number {
     const classReferences = code.match(/\b[A-Z]\w*\b/g) || [];
     return Math.min(100, classReferences.length);
   }
 
-  private calculateLackOfCohesion(code: string, language: string): number {
+  private calculateLackOfCohesion(_code: string, _language: string): number {
     // Simplified LCOM calculation
     return Math.round(Math.random() * 30); // Placeholder
   }
@@ -694,7 +685,7 @@ export class QualityMetricsCalculator {
     return classes.length > 0 ? Math.round(methods / classes.length) : 0;
   }
 
-  private calculateNamingConventionScore(code: string, language: string): number {
+  private calculateNamingConventionScore(code: string, _language: string): number {
     let score = 100;
     const lines = code.split('\n');
     
@@ -717,7 +708,7 @@ export class QualityMetricsCalculator {
 
   private calculateCommentQualityScore(code: string, language: string): number {
     const commentLines = this.extractCommentLines(code, language);
-    const totalLines = code.split('\n').length;
+    // const totalLines = code.split('\n').length; // Unused variable
     
     if (commentLines.length === 0) return 0;
     
@@ -738,7 +729,7 @@ export class QualityMetricsCalculator {
 
   private calculateDocumentationScore(code: string, language: string): number {
     // Check for proper documentation
-    const hasClassDocs = code.match(/\/\*\*[\s\S]*?\*\//g) || [];
+    // const hasClassDocs = code.match(/\/\*\*[\s\S]*?\*\//g) || []; // Unused variable
     const hasFunctionDocs = code.match(/\/\*\*[\s\S]*?\*\//g) || [];
     
     const totalFunctions = this.countFunctions(code, language);
@@ -754,7 +745,7 @@ export class QualityMetricsCalculator {
     return Math.round((totalDebt / totalLines) * 100 * 100) / 100;
   }
 
-  private countCodeSmells(code: string, language: string): number {
+  private countCodeSmells(code: string, _language: string): number {
     let smells = 0;
     const lines = code.split('\n');
     
@@ -771,7 +762,7 @@ export class QualityMetricsCalculator {
     return smells;
   }
 
-  private calculateCodeChurn(code: string, language: string): any {
+  private calculateCodeChurn(_code: string, _language: string): any {
     // Simplified - would need git history for real implementation
     return {
       recentChanges: Math.floor(Math.random() * 10),
@@ -779,7 +770,7 @@ export class QualityMetricsCalculator {
     };
   }
 
-  private calculateDuplicationRatio(code: string, language: string): number {
+  private calculateDuplicationRatio(code: string, _language: string): number {
     // Simplified duplication detection
     const lines = code.split('\n');
     const lineSet = new Set(lines);
@@ -788,7 +779,7 @@ export class QualityMetricsCalculator {
     return Math.round((duplicatedLines / lines.length) * 100 * 100) / 100;
   }
 
-  private analyzeAlgorithmicComplexity(code: string, language: string): string {
+  private analyzeAlgorithmicComplexity(code: string, _language: string): string {
     // Simplified algorithmic complexity analysis
     if (code.match(/\bfor.*for\b/)) return 'O(n²)';
     if (code.match(/\bwhile.*while\b/)) return 'O(n²)';
@@ -796,9 +787,8 @@ export class QualityMetricsCalculator {
     return 'O(1)';
   }
 
-  private estimateMemoryUsage(code: string, language: string): any {
+  private estimateMemoryUsage(code: string, _language: string): any {
     // Simplified memory estimation
-    const lines = code.split('\n');
     const arrays = code.match(/\[\]/g) || [];
     const objects = code.match(/\{\}/g) || [];
     
@@ -812,7 +802,7 @@ export class QualityMetricsCalculator {
     return this.analyzeAlgorithmicComplexity(code, language);
   }
 
-  private countSecurityIssues(code: string, language: string): number {
+  private countSecurityIssues(code: string, _language: string): number {
     let issues = 0;
     const lines = code.split('\n');
     
@@ -849,7 +839,7 @@ export class QualityMetricsCalculator {
     return functions > 0 ? Math.round((testFiles.length / functions) * 100) : 0;
   }
 
-  private calculateTestQualityScore(code: string, language: string): number {
+  private calculateTestQualityScore(code: string, _language: string): number {
     // Simplified test quality assessment
     const assertions = code.match(/\b(assert|expect|should)\b/gi) || [];
     const testFunctions = code.match(/\b(test|it)\b/gi) || [];
@@ -871,5 +861,47 @@ export class QualityMetricsCalculator {
 
   updateThresholds(newThresholds: Partial<QualityThresholds>): void {
     this.thresholds = { ...this.thresholds, ...newThresholds };
+  }
+
+  private calculateErrorHandlingScore(code: string, _language: string): number {
+    let score = 100;
+    const lines = code.split('\n');
+    
+    // Check for try-catch blocks
+    const tryCatchCount = (code.match(/\btry\b/g) || []).length;
+    const catchCount = (code.match(/\bcatch\b/g) || []).length;
+    
+    // Check for error handling patterns
+    const errorChecks = (code.match(/\bif\s*\(.*error\b/gi) || []).length;
+    const throwsStatements = (code.match(/\bthrow\b/g) || []).length;
+    
+    // Deduct for missing error handling
+    if (tryCatchCount === 0) score -= 20;
+    if (catchCount < tryCatchCount) score -= 10;
+    if (errorChecks === 0) score -= 10;
+    
+    return Math.max(0, Math.min(100, score));
+  }
+
+  private calculateResourceManagementScore(code: string, _language: string): number {
+    let score = 100;
+    const lines = code.split('\n');
+    
+    // Check for resource management patterns
+    const fileOperations = (code.match(/\b(new\s+)?File(Input|Output|Reader|Writer)\b/g) || []).length;
+    const databaseConnections = (code.match(/\b(connection|connect)\b/gi) || []).length;
+    const networkOperations = (code.match(/\b(http|socket|request)\b/gi) || []).length;
+    
+    // Check for proper resource cleanup
+    const closeStatements = (code.match(/\b\.close\(\)/g) || []).length;
+    const usingStatements = (code.match(/\b(using|try-with-resources)\b/g) || []).length;
+    
+    // Deduct for missing resource management
+    const totalResources = fileOperations + databaseConnections + networkOperations;
+    if (totalResources > 0 && closeStatements === 0 && usingStatements === 0) {
+      score -= 30;
+    }
+    
+    return Math.max(0, Math.min(100, score));
   }
 }

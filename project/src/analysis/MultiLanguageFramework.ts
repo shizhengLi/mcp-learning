@@ -45,11 +45,14 @@ export class MultiLanguageFramework {
       metrics: {
         complexity: {
           high: 10,
-          medium: 5
+          medium: 5,
+          low: 1
         },
         maintainability: {
           poor: 50,
-          fair: 75
+          fair: 75,
+          good: 85,
+          excellent: 95
         }
       }
     });
@@ -70,11 +73,14 @@ export class MultiLanguageFramework {
       metrics: {
         complexity: {
           high: 8,
-          medium: 4
+          medium: 4,
+          low: 1
         },
         maintainability: {
           poor: 45,
-          fair: 70
+          fair: 70,
+          good: 80,
+          excellent: 90
         }
       }
     });
@@ -95,11 +101,14 @@ export class MultiLanguageFramework {
       metrics: {
         complexity: {
           high: 9,
-          medium: 5
+          medium: 5,
+          low: 1
         },
         maintainability: {
           poor: 55,
-          fair: 75
+          fair: 75,
+          good: 85,
+          excellent: 95
         }
       }
     });
@@ -120,11 +129,14 @@ export class MultiLanguageFramework {
       metrics: {
         complexity: {
           high: 15,
-          medium: 8
+          medium: 8,
+          low: 1
         },
         maintainability: {
           poor: 40,
-          fair: 65
+          fair: 65,
+          good: 75,
+          excellent: 85
         }
       }
     });
@@ -145,11 +157,14 @@ export class MultiLanguageFramework {
       metrics: {
         complexity: {
           high: 12,
-          medium: 6
+          medium: 6,
+          low: 1
         },
         maintainability: {
           poor: 50,
-          fair: 70
+          fair: 70,
+          good: 80,
+          excellent: 90
         }
       }
     });
@@ -170,11 +185,14 @@ export class MultiLanguageFramework {
       metrics: {
         complexity: {
           high: 20,
-          medium: 10
+          medium: 10,
+          low: 1
         },
         maintainability: {
           poor: 35,
-          fair: 60
+          fair: 60,
+          good: 75,
+          excellent: 85
         }
       }
     });
@@ -195,11 +213,14 @@ export class MultiLanguageFramework {
       metrics: {
         complexity: {
           high: 11,
-          medium: 6
+          medium: 6,
+          low: 1
         },
         maintainability: {
           poor: 55,
-          fair: 75
+          fair: 75,
+          good: 85,
+          excellent: 95
         }
       }
     });
@@ -220,11 +241,14 @@ export class MultiLanguageFramework {
       metrics: {
         complexity: {
           high: 8,
-          medium: 4
+          medium: 4,
+          low: 1
         },
         maintainability: {
           poor: 45,
-          fair: 70
+          fair: 70,
+          good: 80,
+          excellent: 90
         }
       }
     });
@@ -245,11 +269,14 @@ export class MultiLanguageFramework {
       metrics: {
         complexity: {
           high: 12,
-          medium: 6
+          medium: 6,
+          low: 1
         },
         maintainability: {
           poor: 40,
-          fair: 65
+          fair: 65,
+          good: 75,
+          excellent: 85
         }
       }
     });

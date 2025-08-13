@@ -111,7 +111,7 @@ export class JavaAnalyzer extends BaseLanguageAnalyzer {
     return { functions, classes, imports, exports };
   }
 
-  protected checkLanguageSpecificRules(code: string, rules: string[]): AnalysisIssue[] {
+  protected checkLanguageSpecificRules(code: string, rules: string[]): Issue[] {
     const issues: Issue[] = [];
     const lines = code.split('\n');
 
@@ -148,7 +148,7 @@ export class JavaAnalyzer extends BaseLanguageAnalyzer {
     // Initialize Java analyzer
   }
 
-  protected generateLanguageSpecificSuggestions(code: string, metrics: CodeMetrics): RefactoringSuggestion[] {
+  protected generateLanguageSpecificSuggestions(code: string, _metrics: CodeMetrics): RefactoringSuggestion[] {
     const suggestions: RefactoringSuggestion[] = [];
     const lines = code.split('\n');
 
@@ -166,7 +166,7 @@ export class JavaAnalyzer extends BaseLanguageAnalyzer {
         'medium',
         `Consider using StringBuilder for ${stringConcatenationInLoops} string concatenation operations in loops`,
         1,
-        { performanceImprovement: 15, maintainabilityImprovement: 5 }
+        { performanceImprovement: '15%', maintainabilityImprovement: 5 }
       ));
     }
 
@@ -220,7 +220,7 @@ export class JavaAnalyzer extends BaseLanguageAnalyzer {
     return suggestions;
   }
 
-  protected async readFile(filePath: string): Promise<string> {
+  protected async readFile(_filePath: string): Promise<string> {
     // Mock implementation - in real implementation, read from file system
     return `// Mock Java file content
 import java.util.ArrayList;
@@ -267,7 +267,7 @@ class User {
 }`;
   }
 
-  private checkJavaNamingConventions(code: string, lines: string[]): AnalysisIssue[] {
+  private checkJavaNamingConventions(_code: string, lines: string[]): Issue[] {
     const issues: Issue[] = [];
     
     lines.forEach((line, index) => {
@@ -320,7 +320,7 @@ class User {
     return issues;
   }
 
-  private checkUnusedImports(code: string, lines: string[]): AnalysisIssue[] {
+  private checkUnusedImports(code: string, lines: string[]): Issue[] {
     const issues: Issue[] = [];
     const imports: string[] = [];
     
@@ -357,7 +357,7 @@ class User {
     return issues;
   }
 
-  private checkMagicNumbers(code: string, lines: string[]): AnalysisIssue[] {
+  private checkMagicNumbers(_code: string, lines: string[]): Issue[] {
     const issues: Issue[] = [];
     
     lines.forEach((line, index) => {
@@ -389,7 +389,7 @@ class User {
     return issues;
   }
 
-  private checkStringConcatenation(code: string, lines: string[]): AnalysisIssue[] {
+  private checkStringConcatenation(_code: string, lines: string[]): Issue[] {
     const issues: Issue[] = [];
     
     lines.forEach((line, index) => {
@@ -415,7 +415,7 @@ class User {
     return issues;
   }
 
-  private checkExceptionHandling(code: string, lines: string[]): AnalysisIssue[] {
+  private checkExceptionHandling(_code: string, lines: string[]): Issue[] {
     const issues: Issue[] = [];
     
     lines.forEach((line, index) => {
@@ -451,7 +451,7 @@ class User {
     return issues;
   }
 
-  private checkResourceManagement(code: string, lines: string[]): AnalysisIssue[] {
+  private checkResourceManagement(_code: string, lines: string[]): Issue[] {
     const issues: Issue[] = [];
     
     lines.forEach((line, index) => {
@@ -480,7 +480,7 @@ class User {
     return issues;
   }
 
-  private checkCollectionUsage(code: string, lines: string[]): AnalysisIssue[] {
+  private checkCollectionUsage(_code: string, lines: string[]): Issue[] {
     const issues: Issue[] = [];
     
     lines.forEach((line, index) => {

@@ -76,7 +76,7 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
       replacement?: string;
     }
   ): Issue {
-    return {
+    const result: any = {
       type,
       severity,
       message,
@@ -84,6 +84,7 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
       rule,
       fix
     };
+    return result as Issue;
   }
 
   protected createRefactoringSuggestion(

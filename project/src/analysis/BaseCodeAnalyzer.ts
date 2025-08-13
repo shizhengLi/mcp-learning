@@ -16,7 +16,7 @@ export interface AnalysisIssue {
   rule: string;
   fix?: {
     description: string;
-    replacement: string;
+    replacement?: string;
   };
 }
 
