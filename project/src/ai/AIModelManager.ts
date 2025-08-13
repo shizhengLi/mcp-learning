@@ -1,4 +1,4 @@
-import { AnalysisResult, RefactoringSuggestion, CodeMetrics } from './BaseCodeAnalyzer';
+import { AnalysisResult, RefactoringSuggestion, CodeMetrics } from '../analysis/BaseCodeAnalyzer';
 
 export interface AIModel {
   name: string;
@@ -25,6 +25,7 @@ export interface AIModelConfig {
   apiKey?: string;
   model: string;
   baseUrl?: string;
+  endpoint?: string;
   maxTokens?: number;
   temperature?: number;
 }
@@ -166,7 +167,7 @@ export class AIModelManager {
     }
   }
 
-  private selectOptimalModel(context: AIContext, availableModels: string[]): string {
+  private selectOptimalModel(_context: AIContext, availableModels: string[]): string {
     // Simple selection logic - can be enhanced based on task complexity
     if (availableModels.includes('claude')) {
       return 'claude'; // Claude is good for code analysis

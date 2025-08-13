@@ -33,7 +33,7 @@ export interface CodeMetrics {
 }
 
 export interface RefactoringSuggestion {
-  type: 'extract' | 'inline' | 'rename' | 'restructure' | 'optimize';
+  type: 'extract' | 'inline' | 'rename' | 'restructure' | 'optimize' | 'modernize' | 'document';
   priority: 'low' | 'medium' | 'high';
   description: string;
   line: number;

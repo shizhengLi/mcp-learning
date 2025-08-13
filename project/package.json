@@ -24,6 +24,7 @@
   "author": "DevInsight Team",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
     "@modelcontextprotocol/sdk": "^1.17.2",
     "bcrypt": "^5.1.1",
     "commander": "^11.1.0",
@@ -31,6 +32,7 @@
     "crypto": "^1.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "openai": "^4.57.0",
     "winston": "^3.11.0",
     "ws": "^8.14.2",
     "zod": "^3.22.4"
