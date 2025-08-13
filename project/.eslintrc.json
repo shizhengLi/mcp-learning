@@ -1,7 +1,5 @@
 {
-  "extends": [
-    "eslint:recommended"
-  ],
+  "extends": ["eslint:recommended"],
   "parserOptions": {
     "ecmaVersion": 2022,
     "sourceType": "module"
@@ -15,11 +13,5 @@
     "no-unused-vars": "warn",
     "no-console": "warn"
   },
-  "ignorePatterns": [
-    "dist/",
-    "node_modules/",
-    "coverage/",
-    "*.js",
-    "*.ts"
-  ]
+  "ignorePatterns": ["dist/", "node_modules/", "coverage/", "**/*.ts", "**/*.tsx"]
 }

@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
-import { BaseCodeAnalyzer, AnalysisOptions } from '../analysis/BaseCodeAnalyzer';
+import { describe, it, expect, beforeEach } from '@jest/globals'
+import { BaseCodeAnalyzer, AnalysisOptions } from '../analysis/BaseCodeAnalyzer'
 
 // Mock implementation for testing
 class TestCodeAnalyzer extends BaseCodeAnalyzer {
   constructor(options?: AnalysisOptions) {
-    super(options);
+    super(options)
   }
 
   async initialize(): Promise<void> {
@@ -17,12 +17,12 @@ class TestCodeAnalyzer extends BaseCodeAnalyzer {
     return true;
   }
   return false;
-}`;
+}`
   }
 }
 
 describe('BaseCodeAnalyzer', () => {
-  let analyzer: TestCodeAnalyzer;
+  let analyzer: TestCodeAnalyzer
 
   beforeEach(() => {
     analyzer = new TestCodeAnalyzer({
@@ -32,33 +32,33 @@ describe('BaseCodeAnalyzer', () => {
         complexity: 10,
         maintainability: 70,
       },
-    });
-  });
+    })
+  })
 
   describe('Constructor', () => {
     it('should initialize with default options', () => {
-      const defaultAnalyzer = new TestCodeAnalyzer();
-      expect((defaultAnalyzer as any).options.includeSuggestions).toBe(true);
-      expect((defaultAnalyzer as any).options.skipDependencies).toBe(false);
-    });
+      const defaultAnalyzer = new TestCodeAnalyzer()
+      expect((defaultAnalyzer as any).options.includeSuggestions).toBe(true)
+      expect((defaultAnalyzer as any).options.skipDependencies).toBe(false)
+    })
 
     it('should merge provided options with defaults', () => {
       const customAnalyzer = new TestCodeAnalyzer({
         includeSuggestions: false,
         thresholds: { complexity: 15 },
-      });
-      expect((customAnalyzer as any).options.includeSuggestions).toBe(false);
-      expect((customAnalyzer as any).options.skipDependencies).toBe(false);
-      expect((customAnalyzer as any).options.thresholds?.complexity).toBe(15);
-    });
-  });
+      })
+      expect((customAnalyzer as any).options.includeSuggestions).toBe(false)
+      expect((customAnalyzer as any).options.skipDependencies).toBe(false)
+      expect((customAnalyzer as any).options.thresholds?.complexity).toBe(15)
+    })
+  })
 
   describe('Complexity Calculation', () => {
     it('should calculate basic complexity', () => {
-      const simpleCode = 'function test() { return true; }';
-      const complexity = (analyzer as any).calculateComplexity(simpleCode);
-      expect(complexity).toBe(1);
-    });
+      const simpleCode = 'function test() { return true; }'
+      const complexity = (analyzer as any).calculateComplexity(simpleCode)
+      expect(complexity).toBe(1)
+    })
 
     it('should increase complexity for control structures', () => {
       const complexCode = `function test() {
@@ -72,16 +72,16 @@ describe('BaseCodeAnalyzer', () => {
       break;
     }
   }
-}`;
-      const complexity = (analyzer as any).calculateComplexity(complexCode);
-      expect(complexity).toBeGreaterThan(1);
-    });
+}`
+      const complexity = (analyzer as any).calculateComplexity(complexCode)
+      expect(complexity).toBeGreaterThan(1)
+    })
 
     it('should handle empty code', () => {
-      const complexity = (analyzer as any).calculateComplexity('');
-      expect(complexity).toBe(1);
-    });
-  });
+      const complexity = (analyzer as any).calculateComplexity('')
+      expect(complexity).toBe(1)
+    })
+  })
 
   describe('Maintainability Calculation', () => {
     it('should calculate maintainability index', () => {
@@ -95,12 +95,12 @@ describe('BaseCodeAnalyzer', () => {
         averageFunctionLength: 16,
         dependencies: [],
         technicalDebt: 0,
-      };
+      }
 
-      const maintainability = (analyzer as any).calculateMaintainability(metrics);
-      expect(maintainability).toBeGreaterThan(0);
-      expect(maintainability).toBeLessThanOrEqual(100);
-    });
+      const maintainability = (analyzer as any).calculateMaintainability(metrics)
+      expect(maintainability).toBeGreaterThan(0)
+      expect(maintainability).toBeLessThanOrEqual(100)
+    })
 
     it('should handle high complexity', () => {
       const metrics = {
@@ -113,12 +113,12 @@ describe('BaseCodeAnalyzer', () => {
         averageFunctionLength: 100,
         dependencies: [],
         technicalDebt: 0,
-      };
+      }
 
-      const maintainability = (analyzer as any).calculateMaintainability(metrics);
-      expect(maintainability).toBeLessThan(50);
-    });
-  });
+      const maintainability = (analyzer as any).calculateMaintainability(metrics)
+      expect(maintainability).toBeLessThan(50)
+    })
+  })
 
   describe('Technical Debt Calculation', () => {
     it('should calculate zero technical debt for good metrics', () => {
@@ -132,11 +132,11 @@ describe('BaseCodeAnalyzer', () => {
         averageFunctionLength: 20,
         dependencies: [],
         technicalDebt: 0,
-      };
+      }
 
-      const debt = (analyzer as any).calculateTechnicalDebt(metrics);
-      expect(debt).toBe(0);
-    });
+      const debt = (analyzer as any).calculateTechnicalDebt(metrics)
+      expect(debt).toBe(0)
+    })
 
     it('should calculate technical debt for poor metrics', () => {
       const metrics = {
@@ -149,29 +149,29 @@ describe('BaseCodeAnalyzer', () => {
         averageFunctionLength: 250,
         dependencies: [],
         technicalDebt: 0,
-      };
+      }
 
-      const debt = (analyzer as any).calculateTechnicalDebt(metrics);
-      expect(debt).toBeGreaterThan(0);
-    });
-  });
+      const debt = (analyzer as any).calculateTechnicalDebt(metrics)
+      expect(debt).toBeGreaterThan(0)
+    })
+  })
 
   describe('Language Support', () => {
     it('should report no supported languages initially', () => {
-      const languages = analyzer.getSupportedLanguages();
-      expect(languages).toEqual([]);
-    });
+      const languages = analyzer.getSupportedLanguages()
+      expect(languages).toEqual([])
+    })
 
     it('should check language support', () => {
-      expect(analyzer.isLanguageSupported('javascript')).toBe(false);
-      expect(analyzer.isLanguageSupported('python')).toBe(false);
-    });
+      expect(analyzer.isLanguageSupported('javascript')).toBe(false)
+      expect(analyzer.isLanguageSupported('python')).toBe(false)
+    })
 
     it('should detect language from file extension', () => {
-      const language = (analyzer as any).detectLanguage('test.js');
-      expect(language).toBeNull();
-    });
-  });
+      const language = (analyzer as any).detectLanguage('test.js')
+      expect(language).toBeNull()
+    })
+  })
 
   describe('Options Validation', () => {
     it('should validate correct thresholds', () => {
@@ -181,60 +181,61 @@ describe('BaseCodeAnalyzer', () => {
           maintainability: 70,
           coverage: 80,
         },
-      };
+      }
 
       expect(() => {
-        (analyzer as any).validateOptions(validOptions);
-      }).not.toThrow();
-    });
+        ;(analyzer as any).validateOptions(validOptions)
+      }).not.toThrow()
+    })
 
     it('should reject invalid complexity threshold', () => {
       const invalidOptions = {
         thresholds: {
           complexity: 0,
         },
-      };
+      }
 
       expect(() => {
-        (analyzer as any).validateOptions(invalidOptions);
-      }).toThrow('Complexity threshold must be at least 1');
-    });
+        ;(analyzer as any).validateOptions(invalidOptions)
+      }).toThrow('Complexity threshold must be at least 1')
+    })
 
     it('should reject invalid maintainability threshold', () => {
       const invalidOptions = {
         thresholds: {
           maintainability: 150,
         },
-      };
+      }
 
       expect(() => {
-        (analyzer as any).validateOptions(invalidOptions);
-      }).toThrow('Maintainability threshold must be between 0 and 100');
-    });
+        ;(analyzer as any).validateOptions(invalidOptions)
+      }).toThrow('Maintainability threshold must be between 0 and 100')
+    })
 
     it('should reject invalid coverage threshold', () => {
       const invalidOptions = {
         thresholds: {
           coverage: -10,
         },
-      };
+      }
 
       expect(() => {
-        (analyzer as any).validateOptions(invalidOptions);
-      }).toThrow('Coverage threshold must be between 0 and 100');
-    });
-  });
+        ;(analyzer as any).validateOptions(invalidOptions)
+      }).toThrow('Coverage threshold must be between 0 and 100')
+    })
+  })
 
   describe('File Analysis', () => {
     it('should throw error for unsupported file types', async () => {
-      await expect(analyzer.analyzeFile('test.unknown'))
-        .rejects.toThrow('Unsupported file type: test.unknown');
-    });
+      await expect(analyzer.analyzeFile('test.unknown')).rejects.toThrow(
+        'Unsupported file type: test.unknown'
+      )
+    })
 
     it('should handle multiple file analysis', async () => {
-      const results = await analyzer.analyzeFiles(['test.js', 'test.py']);
-      expect(results).toEqual([]);
+      const results = await analyzer.analyzeFiles(['test.js', 'test.py'])
+      expect(results).toEqual([])
       // Should continue despite errors for individual files
-    });
-  });
-});
+    })
+  })
+})

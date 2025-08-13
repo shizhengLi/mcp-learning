@@ -1,10 +1,10 @@
-import { BaseMCPServer } from './BaseMCPServer';
-import { MCPRequest, MCPResponse } from '../types/index';
-import { z } from 'zod';
+import { BaseMCPServer } from './BaseMCPServer'
+import { MCPRequest, MCPResponse } from '../types/index'
+import { z } from 'zod'
 
 export class TestMCPServer extends BaseMCPServer {
   protected getServerInstructions(): string {
-    return 'Test MCP server for unit testing';
+    return 'Test MCP server for unit testing'
   }
 
   protected initializeTools(): void {
@@ -22,9 +22,9 @@ export class TestMCPServer extends BaseMCPServer {
               text: `Echo: ${message}`,
             },
           ],
-        };
+        }
       }
-    );
+    )
 
     this.server.tool(
       'add',
@@ -41,9 +41,9 @@ export class TestMCPServer extends BaseMCPServer {
               text: `Result: ${a + b}`,
             },
           ],
-        };
+        }
       }
-    );
+    )
   }
 
   protected initializeResources(): void {
@@ -52,32 +52,24 @@ export class TestMCPServer extends BaseMCPServer {
 
   protected async handleRequest(request: MCPRequest): Promise<MCPResponse> {
     if (!this.validateRequest(request)) {
-      return this.createErrorResponse(
-        request.id,
-        -32600,
-        'Invalid Request'
-      );
+      return this.createErrorResponse(request.id, -32600, 'Invalid Request')
     }
 
     switch (request.method) {
       case 'echo':
         return this.createSuccessResponse(request.id, {
           message: request.params?.message || 'No message provided',
-        });
-      
+        })
+
       case 'add':
-        const a = request.params?.a || 0;
-        const b = request.params?.b || 0;
+        const a = request.params?.a || 0
+        const b = request.params?.b || 0
         return this.createSuccessResponse(request.id, {
           result: a + b,
-        });
-      
+        })
+
       default:
-        return this.createErrorResponse(
-          request.id,
-          -32601,
-          'Method not found'
-        );
+        return this.createErrorResponse(request.id, -32601, 'Method not found')
     }
   }
 
@@ -96,6 +88,6 @@ export class TestMCPServer extends BaseMCPServer {
       send: async (_message: any) => {
         // Mock send
       },
-    };
+    }
   }
 }

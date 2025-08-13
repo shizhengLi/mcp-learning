@@ -1,187 +1,193 @@
-import { AnalysisResult, RefactoringSuggestion, CodeMetrics } from '../analysis/BaseCodeAnalyzer';
+import { AnalysisResult, RefactoringSuggestion, CodeMetrics } from '../analysis/BaseCodeAnalyzer'
 
 export interface AIModel {
-  name: string;
-  generate(prompt: string, context?: AIContext): Promise<AIResponse>;
-  isAvailable(): Promise<boolean>;
+  name: string
+  generate(prompt: string, context?: AIContext): Promise<AIResponse>
+  isAvailable(): Promise<boolean>
 }
 
 export interface AIContext {
-  language: string;
-  code: string;
-  filePath?: string;
-  metrics?: CodeMetrics;
-  additionalContext?: string;
+  language: string
+  code: string
+  filePath?: string
+  metrics?: CodeMetrics
+  additionalContext?: string
 }
 
 export interface AIResponse {
-  content: string;
-  suggestions: RefactoringSuggestion[];
-  confidence: number;
-  model: string;
+  content: string
+  suggestions: RefactoringSuggestion[]
+  confidence: number
+  model: string
 }
 
 export interface AIModelConfig {
-  apiKey?: string;
-  model: string;
-  baseUrl?: string;
-  endpoint?: string;
-  maxTokens?: number;
-  temperature?: number;
+  apiKey?: string
+  model: string
+  baseUrl?: string
+  endpoint?: string
+  maxTokens?: number
+  temperature?: number
 }
 
 export class AIModelManager {
-  private models: Map<string, AIModel> = new Map();
-  private defaultModel: string = 'claude';
+  private models: Map<string, AIModel> = new Map()
+  private defaultModel: string = 'claude'
 
   constructor() {
-    this.initializeModels();
+    this.initializeModels()
   }
 
   private async initializeModels(): Promise<void> {
     // Initialize Claude model
     if (process.env.CLAUDE_API_KEY) {
       try {
-        const { ClaudeModel } = await import('./models/ClaudeModel');
-        this.models.set('claude', new ClaudeModel({
-          apiKey: process.env.CLAUDE_API_KEY,
-          model: 'claude-3-sonnet-20240229',
-          maxTokens: 1000,
-          temperature: 0.3
-        }));
+        const { ClaudeModel } = await import('./models/ClaudeModel')
+        this.models.set(
+          'claude',
+          new ClaudeModel({
+            apiKey: process.env.CLAUDE_API_KEY,
+            model: 'claude-3-sonnet-20240229',
+            maxTokens: 1000,
+            temperature: 0.3,
+          })
+        )
       } catch (error) {
-        console.warn('Failed to initialize Claude model:', error);
+        console.warn('Failed to initialize Claude model:', error)
       }
     }
 
     // Initialize OpenAI model
     if (process.env.OPENAI_API_KEY) {
       try {
-        const { OpenAIModel } = await import('./models/OpenAIModel');
-        this.models.set('gpt', new OpenAIModel({
-          apiKey: process.env.OPENAI_API_KEY,
-          model: 'gpt-4-turbo',
-          maxTokens: 1000,
-          temperature: 0.3
-        }));
+        const { OpenAIModel } = await import('./models/OpenAIModel')
+        this.models.set(
+          'gpt',
+          new OpenAIModel({
+            apiKey: process.env.OPENAI_API_KEY,
+            model: 'gpt-4-turbo',
+            maxTokens: 1000,
+            temperature: 0.3,
+          })
+        )
       } catch (error) {
-        console.warn('Failed to initialize OpenAI model:', error);
+        console.warn('Failed to initialize OpenAI model:', error)
       }
     }
 
     // Initialize local model (Ollama)
     if (process.env.OLLAMA_ENDPOINT) {
       try {
-        const { LocalModel } = await import('./models/LocalModel');
-        this.models.set('local', new LocalModel({
-          endpoint: process.env.OLLAMA_ENDPOINT,
-          model: 'codellama',
-          maxTokens: 1000,
-          temperature: 0.3
-        }));
+        const { LocalModel } = await import('./models/LocalModel')
+        this.models.set(
+          'local',
+          new LocalModel({
+            endpoint: process.env.OLLAMA_ENDPOINT,
+            model: 'codellama',
+            maxTokens: 1000,
+            temperature: 0.3,
+          })
+        )
       } catch (error) {
-        console.warn('Failed to initialize local model:', error);
+        console.warn('Failed to initialize local model:', error)
       }
     }
 
     // Set default model based on availability
-    const availableModels = await this.getAvailableModels();
+    const availableModels = await this.getAvailableModels()
     if (availableModels.length > 0) {
-      this.defaultModel = availableModels[0];
+      this.defaultModel = availableModels[0]
     }
   }
 
   async getAvailableModels(): Promise<string[]> {
-    const available: string[] = [];
-    
+    const available: string[] = []
+
     for (const [name, model] of this.models.entries()) {
       try {
         if (await model.isAvailable()) {
-          available.push(name);
+          available.push(name)
         }
       } catch (error) {
-        console.warn(`Model ${name} is not available:`, error);
+        console.warn(`Model ${name} is not available:`, error)
       }
     }
-    
-    return available;
+
+    return available
   }
 
   async generateRefactoringSuggestions(
     code: string,
     context: AIContext
   ): Promise<RefactoringSuggestion[]> {
-    const availableModels = await this.getAvailableModels();
-    
+    const availableModels = await this.getAvailableModels()
+
     if (availableModels.length === 0) {
-      console.warn('No AI models available for refactoring suggestions');
-      return [];
+      console.warn('No AI models available for refactoring suggestions')
+      return []
     }
 
-    const selectedModel = this.selectOptimalModel(context, availableModels);
-    const model = this.models.get(selectedModel);
-    
+    const selectedModel = this.selectOptimalModel(context, availableModels)
+    const model = this.models.get(selectedModel)
+
     if (!model) {
-      console.warn(`Selected model ${selectedModel} not found`);
-      return [];
+      console.warn(`Selected model ${selectedModel} not found`)
+      return []
     }
 
     try {
-      const prompt = this.buildRefactoringPrompt(code, context);
-      const response = await model.generate(prompt, context);
-      
-      return response.suggestions;
+      const prompt = this.buildRefactoringPrompt(code, context)
+      const response = await model.generate(prompt, context)
+
+      return response.suggestions
     } catch (error) {
-      console.error('Error generating AI refactoring suggestions:', error);
-      return [];
+      console.error('Error generating AI refactoring suggestions:', error)
+      return []
     }
   }
 
-  async generateCodeAnalysis(
-    code: string,
-    context: AIContext
-  ): Promise<Partial<AnalysisResult>> {
-    const availableModels = await this.getAvailableModels();
-    
+  async generateCodeAnalysis(code: string, context: AIContext): Promise<Partial<AnalysisResult>> {
+    const availableModels = await this.getAvailableModels()
+
     if (availableModels.length === 0) {
-      console.warn('No AI models available for code analysis');
-      return {};
+      console.warn('No AI models available for code analysis')
+      return {}
     }
 
-    const selectedModel = this.selectOptimalModel(context, availableModels);
-    const model = this.models.get(selectedModel);
-    
+    const selectedModel = this.selectOptimalModel(context, availableModels)
+    const model = this.models.get(selectedModel)
+
     if (!model) {
-      console.warn(`Selected model ${selectedModel} not found`);
-      return {};
+      console.warn(`Selected model ${selectedModel} not found`)
+      return {}
     }
 
     try {
-      const prompt = this.buildAnalysisPrompt(code, context);
-      const response = await model.generate(prompt, context);
-      
-      return this.parseAnalysisResponse(response.content);
+      const prompt = this.buildAnalysisPrompt(code, context)
+      const response = await model.generate(prompt, context)
+
+      return this.parseAnalysisResponse(response.content)
     } catch (error) {
-      console.error('Error generating AI code analysis:', error);
-      return {};
+      console.error('Error generating AI code analysis:', error)
+      return {}
     }
   }
 
   private selectOptimalModel(_context: AIContext, availableModels: string[]): string {
     // Simple selection logic - can be enhanced based on task complexity
     if (availableModels.includes('claude')) {
-      return 'claude'; // Claude is good for code analysis
+      return 'claude' // Claude is good for code analysis
     }
-    
+
     if (availableModels.includes('gpt')) {
-      return 'gpt'; // GPT is good for general tasks
+      return 'gpt' // GPT is good for general tasks
     }
-    
+
     if (availableModels.includes('local')) {
-      return 'local'; // Fallback to local model
+      return 'local' // Fallback to local model
     }
-    
-    return availableModels[0] || this.defaultModel;
+
+    return availableModels[0] || this.defaultModel
   }
 
   private buildRefactoringPrompt(code: string, context: AIContext): string {
@@ -219,7 +225,7 @@ Please provide your response in the following JSON format:
   "explanation": "Brief explanation of the analysis approach"
 }
 
-Focus on practical, actionable suggestions that will have the most impact on code quality.`;
+Focus on practical, actionable suggestions that will have the most impact on code quality.`
   }
 
   private buildAnalysisPrompt(code: string, context: AIContext): string {
@@ -244,51 +250,53 @@ Please provide your analysis in the following format:
     }
   ],
   "insights": "general observations about the code quality"
-}`;
+}`
   }
 
   private parseAnalysisResponse(content: string): Partial<AnalysisResult> {
     try {
-      const parsed = JSON.parse(content);
+      const parsed = JSON.parse(content)
       return {
         // Convert AI response to AnalysisResult format
         // This is a simplified version - in production, you'd want more robust parsing
-        issues: parsed.issues?.map((issue: any) => ({
-          type: issue.type,
-          severity: issue.severity,
-          message: issue.message,
-          line: issue.line,
-          rule: issue.rule
-        })) || [],
-        suggestions: parsed.suggestions?.map((suggestion: any) => ({
-          type: suggestion.type,
-          priority: suggestion.priority,
-          description: suggestion.description,
-          line: suggestion.line,
-          estimatedImpact: suggestion.estimatedImpact
-        })) || []
-      };
+        issues:
+          parsed.issues?.map((issue: any) => ({
+            type: issue.type,
+            severity: issue.severity,
+            message: issue.message,
+            line: issue.line,
+            rule: issue.rule,
+          })) || [],
+        suggestions:
+          parsed.suggestions?.map((suggestion: any) => ({
+            type: suggestion.type,
+            priority: suggestion.priority,
+            description: suggestion.description,
+            line: suggestion.line,
+            estimatedImpact: suggestion.estimatedImpact,
+          })) || [],
+      }
     } catch (error) {
-      console.error('Error parsing AI analysis response:', error);
-      return {};
+      console.error('Error parsing AI analysis response:', error)
+      return {}
     }
   }
 
   async getDefaultModel(): Promise<string> {
-    const availableModels = await this.getAvailableModels();
-    return availableModels[0] || this.defaultModel;
+    const availableModels = await this.getAvailableModels()
+    return availableModels[0] || this.defaultModel
   }
 
   async isModelAvailable(modelName: string): Promise<boolean> {
-    const model = this.models.get(modelName);
+    const model = this.models.get(modelName)
     if (!model) {
-      return false;
+      return false
     }
-    
+
     try {
-      return await model.isAvailable();
+      return await model.isAvailable()
     } catch (error) {
-      return false;
+      return false
     }
   }
 }

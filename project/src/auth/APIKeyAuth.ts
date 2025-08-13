@@ -1,81 +1,81 @@
-import crypto from 'crypto';
-import { BaseAuth, AuthConfig, AuthContext, AuthToken, AuthRequest, AuthResult } from './BaseAuth';
+import crypto from 'crypto'
+import { BaseAuth, AuthConfig, AuthContext, AuthToken, AuthRequest, AuthResult } from './BaseAuth'
 
 export class APIKeyAuth extends BaseAuth {
-  private apiKeys: Map<string, AuthContext> = new Map();
+  private apiKeys: Map<string, AuthContext> = new Map()
 
   constructor(config: AuthConfig) {
-    super(config);
-    this.initializeTestAPIKeys();
+    super(config)
+    this.initializeTestAPIKeys()
   }
 
   async authenticate(request: AuthRequest): Promise<AuthResult> {
     try {
-      const apiKey = this.extractAPIKey(request);
+      const apiKey = this.extractAPIKey(request)
       if (!apiKey) {
-        return this.createError('No API key provided', 401);
+        return this.createError('No API key provided', 401)
       }
 
-      const context = this.apiKeys.get(apiKey);
+      const context = this.apiKeys.get(apiKey)
       if (!context) {
-        return this.createError('Invalid API key', 401);
+        return this.createError('Invalid API key', 401)
       }
 
-      return this.createSuccess(context);
+      return this.createSuccess(context)
     } catch (error) {
-      return this.createError('Authentication failed', 500);
+      return this.createError('Authentication failed', 500)
     }
   }
 
   async authorize(context: AuthContext, requiredPermissions: string[]): Promise<boolean> {
-    return this.hasPermission(context, requiredPermissions);
+    return this.hasPermission(context, requiredPermissions)
   }
 
   async generateToken(context: AuthContext): Promise<AuthToken> {
-    const apiKey = this.generateAPIKey();
-    this.apiKeys.set(apiKey, context);
+    const apiKey = this.generateAPIKey()
+    this.apiKeys.set(apiKey, context)
 
     return {
       token: apiKey,
       type: 'apikey',
-      expiresAt: Date.now() + (365 * 24 * 60 * 60 * 1000), // 1 year
+      expiresAt: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year
       scopes: context.permissions,
-    };
+    }
   }
 
   async validateToken(token: string): Promise<AuthResult> {
     try {
-      const context = this.apiKeys.get(token);
+      const context = this.apiKeys.get(token)
       if (!context) {
-        return this.createError('Invalid API key', 401);
+        return this.createError('Invalid API key', 401)
       }
 
-      return this.createSuccess(context);
+      return this.createSuccess(context)
     } catch (error) {
-      return this.createError('API key validation failed', 500);
+      return this.createError('API key validation failed', 500)
     }
   }
 
   async refreshToken(refreshToken: string): Promise<AuthToken> {
-    const result = await this.validateToken(refreshToken);
+    const result = await this.validateToken(refreshToken)
     if (!result.success || !result.context) {
-      throw new Error(result.error || 'Invalid refresh token');
+      throw new Error(result.error || 'Invalid refresh token')
     }
 
-    return this.generateToken(result.context);
+    return this.generateToken(result.context)
   }
 
   private extractAPIKey(request: AuthRequest): string | null {
     return (
       this.extractApiKeyFromHeader(request.headers || {}) ||
       this.extractTokenFromQuery(request.query || {})
-    );
+    )
   }
 
   private generateAPIKey(): string {
-    const prefix = this.config.apiKeyPrefix;
-    const randomBytes = crypto.randomBytes(32).toString('hex');
-    return `${prefix}_${randomBytes}`;
+    const prefix = this.config.apiKeyPrefix
+    const randomBytes = crypto.randomBytes(32).toString('hex')
+    return `${prefix}_${randomBytes}`
   }
 
   private initializeTestAPIKeys(): void {
@@ -110,37 +110,37 @@ export class APIKeyAuth extends BaseAuth {
           metadata: { email: 'guest@example.com' },
         },
       },
-    ];
+    ]
 
     testAPIKeys.forEach(({ key, context }) => {
-      this.apiKeys.set(key, context);
-    });
+      this.apiKeys.set(key, context)
+    })
   }
 
   public createAPIKey(context: AuthContext): string {
-    const apiKey = this.generateAPIKey();
-    this.apiKeys.set(apiKey, context);
-    return apiKey;
+    const apiKey = this.generateAPIKey()
+    this.apiKeys.set(apiKey, context)
+    return apiKey
   }
 
   public revokeAPIKey(apiKey: string): boolean {
-    return this.apiKeys.delete(apiKey);
+    return this.apiKeys.delete(apiKey)
   }
 
   public getAPIKeyContext(apiKey: string): AuthContext | undefined {
-    return this.apiKeys.get(apiKey);
+    return this.apiKeys.get(apiKey)
   }
 
   public getAllAPIKeys(): Array<{ key: string; context: AuthContext }> {
     return Array.from(this.apiKeys.entries()).map(([key, context]) => ({
       key,
       context,
-    }));
+    }))
   }
 
   public validateAPIKeyFormat(apiKey: string): boolean {
-    const prefix = this.config.apiKeyPrefix;
-    const regex = new RegExp(`^${prefix}_[a-f0-9]{64}$`);
-    return regex.test(apiKey);
+    const prefix = this.config.apiKeyPrefix
+    const regex = new RegExp(`^${prefix}_[a-f0-9]{64}$`)
+    return regex.test(apiKey)
   }
 }
