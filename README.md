@@ -433,7 +433,7 @@ Excellent! The MCP platform is in perfect condition:
 npm test
 npm run typecheck
 npm run lint
-
+npm test -- --testPathPattern=CollaborationServer
 ```
 
 ## 总结

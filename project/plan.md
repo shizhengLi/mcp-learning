@@ -421,7 +421,7 @@ class MetricsCollector {
 
 ## Implementation Plan
 
-需要小步快跑，完成一部分就要单元测试，全部通过后，再完成下一部分。然后要集成测试。
+需要小步快跑，完成一部分就要单元测试，全部通过后，npm lint, typecheck, test全部通过。再完成下一部分。然后要集成测试。
 
 ### Phase 1: Core Infrastructure (Weeks 1-2)
 
@@ -430,8 +430,6 @@ class MetricsCollector {
 - [x] Create transport layer abstraction
 - [x] Set up authentication and security framework
 - [x] Implement basic metrics collection
-
-需要小步快跑，完成一部分就要单元测试，全部通过后，再完成下一部分。然后要集成测试。
 
 ### Phase 2: Code Analysis Server (Weeks 3-4)
 
@@ -451,11 +449,13 @@ class MetricsCollector {
 
 ### Phase 4: Collaboration Server (Weeks 7-8)
 
-- [ ] Implement WebSocket-based real-time features
-- [ ] Create collaboration session management
-- [ ] Build code review and discussion features
-- [ ] Implement pair programming assistance
-- [ ] Add VCS integration
+- [x] Implement WebSocket-based real-time features
+- [x] Create collaboration session management
+- [x] Build code review and discussion features
+- [x] Implement pair programming assistance
+- [x] Add VCS integration
+
+问题：pair grogramming和VCS integration没有测试。需要在/data/lishizheng/python_projects/mcp-learning/project/src/__tests__/CollaborationServer.test.ts这里进行测试。
 
 ### Phase 5: Testing & Debugging Server (Weeks 9-10)
 
