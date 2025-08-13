@@ -294,8 +294,8 @@ def complex_function(data):
 
     it('should throw error when analyzer is not available', async () => {
       await expect(
-        framework.analyzeCode('code', 'python')
-      ).rejects.toThrow('No analyzer available for language: python');
+        framework.analyzeCode('code', 'cpp')
+      ).rejects.toThrow('No analyzer available for language: cpp');
     });
 
     it('should handle invalid code gracefully', async () => {

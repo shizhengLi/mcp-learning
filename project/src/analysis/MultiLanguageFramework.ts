@@ -1,9 +1,17 @@
 import { BaseCodeAnalyzer, AnalysisResult, AnalysisOptions, CodeMetrics } from './BaseCodeAnalyzer';
+import { PythonAnalyzer } from './PythonAnalyzer';
+import { JavaScriptAnalyzer } from './JavaScriptAnalyzer';
+import { TypeScriptAnalyzer } from './TypeScriptAnalyzer';
+import { JavaAnalyzer } from './JavaAnalyzer';
+import { GoAnalyzer } from './GoAnalyzer';
+import { RustAnalyzer } from './RustAnalyzer';
+import { RubyAnalyzer } from './RubyAnalyzer';
+import { PHPAnalyzer } from './PHPAnalyzer';
 
 export interface LanguageConfig {
   name: string;
   extensions: string[];
-  analyzer: new () => BaseCodeAnalyzer;
+  analyzer: new (options?: AnalysisOptions) => BaseCodeAnalyzer;
   defaultRules: string[];
   metrics: {
     complexity: {
@@ -33,7 +41,7 @@ export class MultiLanguageFramework {
     this.registerLanguage({
       name: 'python',
       extensions: ['py', 'pyx'],
-      analyzer: null as any, // Will be set dynamically
+      analyzer: PythonAnalyzer,
       defaultRules: [
         'PEP8_STYLE',
         'COMPLEXITY_HIGH',
@@ -61,7 +69,7 @@ export class MultiLanguageFramework {
     this.registerLanguage({
       name: 'javascript',
       extensions: ['js', 'jsx', 'mjs'],
-      analyzer: null as any, // Will be set dynamically
+      analyzer: JavaScriptAnalyzer,
       defaultRules: [
         'ES6_STANDARDS',
         'COMPLEXITY_HIGH',
@@ -89,7 +97,7 @@ export class MultiLanguageFramework {
     this.registerLanguage({
       name: 'typescript',
       extensions: ['ts', 'tsx'],
-      analyzer: null as any, // Will be set dynamically
+      analyzer: TypeScriptAnalyzer,
       defaultRules: [
         'TYPE_SAFETY',
         'ES6_STANDARDS',
@@ -117,7 +125,7 @@ export class MultiLanguageFramework {
     this.registerLanguage({
       name: 'java',
       extensions: ['java'],
-      analyzer: null as any, // Will be set dynamically
+      analyzer: JavaAnalyzer,
       defaultRules: [
         'JAVA_NAMING_CONVENTIONS',
         'COMPLEXITY_HIGH',
@@ -145,7 +153,7 @@ export class MultiLanguageFramework {
     this.registerLanguage({
       name: 'go',
       extensions: ['go'],
-      analyzer: null as any, // Will be set dynamically
+      analyzer: GoAnalyzer,
       defaultRules: [
         'GO_STANDARDS',
         'COMPLEXITY_HIGH',
@@ -173,7 +181,7 @@ export class MultiLanguageFramework {
     this.registerLanguage({
       name: 'cpp',
       extensions: ['cpp', 'cc', 'cxx', 'c++', 'h', 'hpp'],
-      analyzer: null as any, // Will be set dynamically
+      analyzer: null as any, // C++ analyzer not implemented yet
       defaultRules: [
         'CPP_STANDARDS',
         'COMPLEXITY_HIGH',
@@ -201,7 +209,7 @@ export class MultiLanguageFramework {
     this.registerLanguage({
       name: 'rust',
       extensions: ['rs'],
-      analyzer: null as any, // Will be set dynamically
+      analyzer: RustAnalyzer,
       defaultRules: [
         'RUST_STANDARDS',
         'COMPLEXITY_HIGH',
@@ -229,7 +237,7 @@ export class MultiLanguageFramework {
     this.registerLanguage({
       name: 'ruby',
       extensions: ['rb'],
-      analyzer: null as any, // Will be set dynamically
+      analyzer: RubyAnalyzer,
       defaultRules: [
         'RUBY_STANDARDS',
         'COMPLEXITY_HIGH',
@@ -257,7 +265,7 @@ export class MultiLanguageFramework {
     this.registerLanguage({
       name: 'php',
       extensions: ['php'],
-      analyzer: null as any, // Will be set dynamically
+      analyzer: PHPAnalyzer,
       defaultRules: [
         'PHP_STANDARDS',
         'COMPLEXITY_HIGH',
