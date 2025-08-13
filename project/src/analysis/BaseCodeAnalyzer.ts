@@ -128,7 +128,7 @@ export abstract class BaseCodeAnalyzer {
     return null;
   }
 
-  protected async readFile(filePath: string): Promise<string> {
+  protected async readFile(_filePath: string): Promise<string> {
     // This will be implemented when we add file system support
     throw new Error('File reading not implemented - use analyzeFile with content parameter');
   }
