@@ -1,168 +1,447 @@
-import { BaseCodeAnalyzer, AnalysisResult, AnalysisIssue, CodeMetrics, RefactoringSuggestion, AnalysisOptions } from './BaseCodeAnalyzer';
+import { BaseLanguageAnalyzer } from './BaseLanguageAnalyzer';
+import { CodeMetrics, RefactoringSuggestion, AnalysisIssue as Issue } from './BaseCodeAnalyzer';
 
-export class JavaScriptAnalyzer extends BaseCodeAnalyzer {
-  constructor(options?: AnalysisOptions) {
-    super(options);
+export class JavaScriptAnalyzer extends BaseLanguageAnalyzer {
+  constructor() {
+    super(
+      'javascript',
+      ['js', 'jsx', 'mjs'],
+      [
+        'ES6_STANDARDS',
+        'COMPLEXITY_HIGH',
+        'FUNCTION_TOO_LONG',
+        'VARIABLE_NAMING',
+        'UNDEFINED_VARIABLES',
+        'MISSING_SEMICOLONS',
+        'NO_VAR_USAGE',
+        'NO_EVAL_USAGE',
+        'STRICT_EQUALITY',
+        'NO_CONSOLE_STATEMENTS'
+      ],
+      {
+        complexity: { high: 8, medium: 4, low: 1 },
+        maintainability: { poor: 45, fair: 70, good: 80, excellent: 90 }
+      }
+    );
   }
 
-  async initialize(): Promise<void> {
-    // Register JavaScript language support
-    this.registerLanguage({
-      name: 'javascript',
-      extensions: ['js', 'jsx', 'ts', 'tsx'],
-      analyze: this.analyzeJavaScriptCode.bind(this),
-    });
-  }
-
-  private async analyzeJavaScriptCode(
-    code: string, 
-    filePath: string, 
-    options: AnalysisOptions
-  ): Promise<AnalysisResult> {
-    const issues: AnalysisIssue[] = [];
-    const suggestions: RefactoringSuggestion[] = [];
-    
-    // Basic JavaScript-specific analysis
+  protected calculateComplexity(code: string): number {
+    let complexity = 1;
     const lines = code.split('\n');
-    let complexity = this.calculateJavaScriptComplexity(code);
-    const metrics = this.calculateJavaScriptMetrics(code, complexity);
 
-    // Check for JavaScript-specific issues
-    issues.push(...this.checkJavaScriptStyle(code, lines));
-    issues.push(...this.checkJavaScriptComplexity(code, lines, complexity, options));
-    issues.push(...this.checkJavaScriptBestPractices(code, lines));
-
-    // Generate JavaScript-specific suggestions
-    if (options.includeSuggestions) {
-      suggestions.push(...this.generateJavaScriptSuggestions(code, lines, metrics));
-    }
-
-    return {
-      filePath,
-      language: 'javascript',
-      issues,
-      metrics,
-      suggestions,
-      timestamp: Date.now(),
-    };
-  }
-
-  private calculateJavaScriptComplexity(code: string): number {
-    const lines = code.split('\n');
-    let complexity = 1; // Base complexity
-
-    for (const line of lines) {
+    lines.forEach(line => {
       const trimmed = line.trim();
       
-      // JavaScript-specific complexity factors
-      if (trimmed.startsWith('if ') || trimmed.startsWith('else if') || trimmed.startsWith('if(')) complexity++;
-      if (trimmed.startsWith('for ') || trimmed.startsWith('for(') || trimmed.startsWith('while ') || trimmed.startsWith('while(')) complexity++;
-      if (trimmed.startsWith('try {') || trimmed.startsWith('try{')) complexity++;
-      if (trimmed.startsWith('catch ') || trimmed.startsWith('catch(')) complexity++;
-      if (trimmed.startsWith('switch (') || trimmed.startsWith('switch(')) complexity++;
-      if (trimmed.startsWith('case ')) complexity++;
-      if (trimmed.includes(' && ') || trimmed.includes(' || ')) complexity++;
-      if (trimmed.includes('?.') || trimmed.includes('??')) complexity++;
-      if (trimmed.includes('await ')) complexity++;
-      if (trimmed.startsWith('function(') || trimmed.includes('function =>')) complexity += 2;
-      if (trimmed.includes('else ')) complexity++;
-    }
+      // Control structures
+      if (trimmed.match(/\b(if|else if|for|while|switch|case|catch|try)\b/)) {
+        complexity++;
+      }
+      
+      // Logical operators
+      if (trimmed.match(/(&&|\|\|)/)) {
+        complexity += 0.5;
+      }
+      
+      // Ternary operators
+      if (trimmed.match(/\?/)) {
+        complexity += 0.5;
+      }
+      
+      // Nested control structures
+      if (trimmed.match(/\b(if|for|while)\b.*\b(if|for|while)\b/)) {
+        complexity += 1;
+      }
+      
+      // Async/await complexity
+      if (trimmed.match(/\b(async|await)\b/)) {
+        complexity += 0.5;
+      }
+      
+      // Arrow functions with complex logic
+      if (trimmed.match(/=>\s*\{/)) {
+        complexity += 0.3;
+      }
+      
+      // Method calls (potential for complex logic)
+      if (trimmed.match(/\.\w+\(/)) {
+        complexity += 0.2;
+      }
+      
+      // Promise chains
+      if (trimmed.match(/\.then\(|\.catch\(/)) {
+        complexity += 0.5;
+      }
+    });
 
-    return complexity;
+    return Math.round(complexity);
   }
 
-  private calculateJavaScriptMetrics(code: string, complexity: number): CodeMetrics {
+  protected calculateMaintainability(metrics: CodeMetrics): number {
+    let maintainability = 100;
+
+    // Deduct for complexity
+    maintainability -= (metrics.complexity - 1) * 1.5;
+
+    // Deduct for long functions
+    if (metrics.averageFunctionLength > 30) {
+      maintainability -= 15;
+    } else if (metrics.averageFunctionLength > 15) {
+      maintainability -= 8;
+    }
+
+    // Bonus for good commenting
+    if (metrics.commentPercentage > 25) {
+      maintainability += 8;
+    }
+
+    // Deduct for low commenting
+    if (metrics.commentPercentage < 15) {
+      maintainability -= 12;
+    }
+
+    // Deduct for too many dependencies
+    if (metrics.dependencies.length > 10) {
+      maintainability -= 5;
+    }
+
+    return Math.max(0, Math.min(100, Math.round(maintainability)));
+  }
+
+  protected analyzeCodeStructure(code: string): {
+    functions: Array<{ name: string; line: number; complexity: number }>;
+    classes: Array<{ name: string; line: number; methods: number }>;
+    imports: string[];
+    exports: string[];
+  } {
+    const functions = this.extractFunctions(code, /function\s+(\w+)|(\w+)\s*[=:]\s*\(.*\)\s*=>/g);
+    const classes = this.extractClasses(code, /class\s+(\w+)/g);
+    const imports = this.extractImports(code, /import\s+.*?from\s+['"]([^'"]+)['"]/g);
+    const exports = this.extractImports(code, /export\s+(?:default\s+)?(?:class|function|const|let|var)\s+(\w+)/g);
+
+    // Also handle require() statements
+    const requireImports = this.extractImports(code, /require\(['"]([^'"]+)['"]\)/g);
+
+    // Combine all imports
+    const allImports = [...imports, ...requireImports];
+
+    // Filter out local imports (relative paths) and extract package names
+    const filteredImports = allImports.filter(imp => 
+      !imp.startsWith('./') && !imp.startsWith('../') && !imp.startsWith('/')
+    );
+
+    return { functions, classes, imports: filteredImports, exports };
+  }
+
+  protected override extractImports(code: string, pattern: RegExp): string[] {
+    const imports: string[] = [];
     const lines = code.split('\n');
-    const nonEmptyLines = lines.filter(line => line.trim().length > 0);
-    const commentLines = lines.filter(line => line.trim().startsWith('//') || line.trim().startsWith('/*'));
-    const functionMatches = code.match(/function\s+\w+|\w+\s*[:=]\s*\(.*\)\s*=>/g) || [];
-    const classMatches = code.match(/class\s+\w+/g) || [];
+    
+    lines.forEach(line => {
+      const match = line.match(pattern);
+      if (match && match[1]) {
+        imports.push(match[1]);
+      }
+    });
 
-    const linesOfCode = nonEmptyLines.length;
-    const commentPercentage = linesOfCode > 0 ? (commentLines.length / linesOfCode) * 100 : 0;
-    const functionCount = functionMatches.length + classMatches.length;
-    const averageFunctionLength = functionCount > 0 ? linesOfCode / functionCount : 0;
-
-    // JavaScript-specific dependencies
-    const dependencies = this.extractJavaScriptDependencies(code);
-
-    return {
-      complexity,
-      maintainability: this.calculateMaintainability({
-        complexity,
-        maintainability: 0,
-        linesOfCode,
-        commentLines: commentLines.length,
-        commentPercentage,
-        functionCount,
-        averageFunctionLength,
-        dependencies,
-        technicalDebt: 0,
-      }),
-      linesOfCode,
-      commentLines: commentLines.length,
-      commentPercentage,
-      functionCount,
-      averageFunctionLength,
-      dependencies,
-      technicalDebt: this.calculateTechnicalDebt({
-        complexity,
-        maintainability: 0,
-        linesOfCode,
-        commentLines: commentLines.length,
-        commentPercentage,
-        functionCount,
-        averageFunctionLength,
-        dependencies,
-        technicalDebt: 0,
-      }),
-    };
+    return imports;
   }
 
-  private extractJavaScriptDependencies(code: string): string[] {
-    const dependencies: string[] = [];
-    
-    // ES6 imports
-    const importRegex = /import\s+(?:.*\s+from\s+)?['"]([^'"]+)['"]/g;
-    let match;
-    
-    while ((match = importRegex.exec(code)) !== null) {
-      const module = match[1];
-      if (!module.startsWith('.') && !module.startsWith('/')) {
-        dependencies.push(module.split('/')[0]);
-      }
-    }
+  protected checkLanguageSpecificRules(code: string, rules: string[]): Issue[] {
+    const issues: Issue[] = [];
+    const lines = code.split('\n');
 
-    // CommonJS require
-    const requireRegex = /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
-    
-    while ((match = requireRegex.exec(code)) !== null) {
-      const module = match[1];
-      if (!module.startsWith('.') && !module.startsWith('/')) {
-        dependencies.push(module.split('/')[0]);
+    rules.forEach(rule => {
+      switch (rule) {
+        case 'ES6_STANDARDS':
+          issues.push(...this.checkES6Standards(code, lines));
+          break;
+        case 'COMPLEXITY_HIGH':
+          issues.push(...this.checkHighComplexity(code, lines));
+          break;
+        case 'FUNCTION_TOO_LONG':
+          issues.push(...this.checkFunctionLength(code, lines));
+          break;
+        case 'VARIABLE_NAMING':
+          issues.push(...this.checkVariableNaming(code, lines));
+          break;
+        case 'UNDEFINED_VARIABLES':
+          issues.push(...this.checkUndefinedVariables(code, lines));
+          break;
+        case 'MISSING_SEMICOLONS':
+          issues.push(...this.checkMissingSemicolons(code, lines));
+          break;
+        case 'NO_VAR_USAGE':
+          issues.push(...this.checkVarUsage(code, lines));
+          break;
+        case 'NO_EVAL_USAGE':
+          issues.push(...this.checkEvalUsage(code, lines));
+          break;
+        case 'STRICT_EQUALITY':
+          issues.push(...this.checkStrictEquality(code, lines));
+          break;
+        case 'NO_CONSOLE_STATEMENTS':
+          issues.push(...this.checkConsoleStatements(code, lines));
+          break;
       }
-    }
+    });
 
-    return [...new Set(dependencies)];
+    return issues;
   }
 
-  private checkJavaScriptStyle(_code: string, lines: string[]): AnalysisIssue[] {
-    const issues: AnalysisIssue[] = [];
+  public async initialize(): Promise<void> {
+    // Initialize JavaScript analyzer
+  }
+
+  protected generateLanguageSpecificSuggestions(code: string, _metrics: CodeMetrics): RefactoringSuggestion[] {
+    const suggestions: RefactoringSuggestion[] = [];
+    const lines = code.split('\n');
+
+    // Suggest async/await for Promise chains
+    const promiseChains = lines.filter(line => line.includes('.then') || line.includes('.catch')).length;
+    if (promiseChains > 1) {
+      suggestions.push(this.createRefactoringSuggestion(
+        'restructure',
+        'medium',
+        `Consider using async/await instead of ${promiseChains} Promise chains for better readability`,
+        1,
+        { maintainabilityImprovement: 15 }
+      ));
+    }
+
+    // Suggest template literals over string concatenation
+    const concatenations = lines.filter(line => line.includes('+') && line.includes('"')).length;
+    if (concatenations > 1) {
+      suggestions.push(this.createRefactoringSuggestion(
+        'optimize',
+        'low',
+        `Use template literals instead of ${concatenations} string concatenation operations`,
+        1,
+        { maintainabilityImprovement: 8 }
+      ));
+    }
+
+    // Suggest arrow functions for simple callbacks
+    const functionKeywords = lines.filter(line => line.includes('function (') || line.includes('function(')).length;
+    if (functionKeywords > 0) {
+      suggestions.push(this.createRefactoringSuggestion(
+        'optimize',
+        'low',
+        'Consider using arrow functions for simple callbacks',
+        1,
+        { maintainabilityImprovement: 5 }
+      ));
+    }
+
+    // Suggest array methods for loops
+    const forLoops = lines.filter(line => line.includes('for (') || line.includes('for(')).length;
+    if (forLoops > 2) {
+      suggestions.push(this.createRefactoringSuggestion(
+        'restructure',
+        'medium',
+        `Consider using array methods (map, filter, reduce) instead of ${forLoops} for loops`,
+        1,
+        { maintainabilityImprovement: 12 }
+      ));
+    }
+
+    // Suggest destructuring for object property access
+    const dotNotations = lines.filter(line => line.match(/\w+\.\w+/)).length;
+    if (dotNotations > 5) {
+      suggestions.push(this.createRefactoringSuggestion(
+        'optimize',
+        'low',
+        'Consider using destructuring assignment for cleaner object property access',
+        1,
+        { maintainabilityImprovement: 10 }
+      ));
+    }
+
+    return suggestions;
+  }
+
+  protected async readFile(_filePath: string): Promise<string> {
+    // Mock implementation - in real implementation, read from file system
+    return `// Mock JavaScript file content
+function helloWorld() {
+  console.log("Hello, World!");
+  return true;
+}
+
+class ExampleClass {
+  constructor(name) {
+    this.name = name;
+  }
+  
+  greet() {
+    return \`Hello, \${this.name}!\`;
+  }
+}
+
+export { helloWorld, ExampleClass };`;
+  }
+
+  private checkES6Standards(_code: string, lines: string[]): Issue[] {
+    const issues: Issue[] = [];
+
+    lines.forEach((line, index) => {
+      const lineNumber = index + 1;
+
+      // Check for var usage (should use let/const)
+      if (line.includes('var ')) {
+        issues.push(this.createIssue(
+          'warning',
+          'medium',
+          'Use let or const instead of var',
+          lineNumber,
+          'ES6_STANDARDS',
+          {
+            description: 'Replace var with let or const for block-scoped variables'
+          }
+        ));
+      }
+
+      // Check for function declarations in blocks
+      if (line.match(/if\s*\([^)]+\)\s*\{[^}]*function\s+\w+/)) {
+        issues.push(this.createIssue(
+          'warning',
+          'medium',
+          'Function declaration in block scope',
+          lineNumber,
+          'ES6_STANDARDS',
+          {
+            description: 'Use function expressions or arrow functions in blocks'
+          }
+        ));
+      }
+    });
+
+    return issues;
+  }
+
+  private checkHighComplexity(code: string, _lines: string[]): Issue[] {
+    const issues: Issue[] = [];
+    const complexity = this.calculateComplexity(code);
+
+    if (complexity > this.config.complexity.high) {
+      issues.push(this.createIssue(
+        'warning',
+        'high',
+        `Code complexity too high (${complexity} > ${this.config.complexity.high})`,
+        1,
+        'COMPLEXITY_HIGH',
+        {
+          description: 'Consider breaking down complex code into smaller functions'
+        }
+      ));
+    }
+
+    return issues;
+  }
+
+  private checkFunctionLength(_code: string, lines: string[]): Issue[] {
+    const issues: Issue[] = [];
+    
+    // Simple function length detection
+    let inFunction = false;
+    let functionStart = 0;
+    let functionLines = 0;
+
+    lines.forEach((line, index) => {
+      if (line.match(/function\s+\w+|\w+\s*[=:]\s*\(.*\)\s*=>/)) {
+        if (inFunction && functionLines > 25) {
+          issues.push(this.createIssue(
+            'warning',
+            'medium',
+            `Function too long (${functionLines} lines)`,
+            functionStart,
+            'FUNCTION_TOO_LONG',
+            {
+              description: 'Consider breaking down long function into smaller functions'
+            }
+          ));
+        }
+        inFunction = true;
+        functionStart = index + 1;
+        functionLines = 0;
+      } else if (inFunction && line.trim() && !line.match(/function\s+\w+|\w+\s*[=:]\s*\(.*\)\s*=>/)) {
+        functionLines++;
+      }
+    });
+
+    return issues;
+  }
+
+  private checkVariableNaming(_code: string, lines: string[]): Issue[] {
+    const issues: Issue[] = [];
+
+    lines.forEach((line, index) => {
+      const lineNumber = index + 1;
+      
+      // Check for camelCase naming
+      const varMatch = line.match(/(?:let|const|var)\s+(\w+)\s*=/);
+      if (varMatch && !varMatch[1].match(/^[a-z][a-zA-Z0-9]*$/)) {
+        issues.push(this.createIssue(
+          'warning',
+          'low',
+          `Variable name "${varMatch[1]}" should use camelCase`,
+          lineNumber,
+          'VARIABLE_NAMING',
+          {
+            description: 'Rename variable to follow camelCase convention'
+          }
+        ));
+      }
+    });
+
+    return issues;
+  }
+
+  private checkUndefinedVariables(_code: string, lines: string[]): Issue[] {
+    const issues: Issue[] = [];
+    const definedVars = new Set<string>();
+
+    // First pass: collect defined variables
+    lines.forEach((line: string) => {
+      const matches = line.match(/(?:let|const|var)\s+(\w+)/g);
+      if (matches) {
+        matches.forEach(match => {
+          const varName = match.replace(/(?:let|const|var)\s+/, '');
+          definedVars.add(varName);
+        });
+      }
+    });
+
+    // Second pass: check for undefined variables
+    lines.forEach((line, index) => {
+      const varUsage = line.match(/\b([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g);
+      if (varUsage) {
+        varUsage.forEach(varName => {
+          if (!definedVars.has(varName) && 
+              !['console', 'window', 'document', 'process', 'global', 'this', 'Array', 'Object', 'String', 'Number', 'Boolean', 'Date', 'Math', 'JSON'].includes(varName)) {
+            issues.push(this.createIssue(
+              'warning',
+              'medium',
+              `Undefined variable "${varName}"`,
+              index + 1,
+              'UNDEFINED_VARIABLES',
+              {
+                description: 'Variable is used but not defined'
+              }
+            ));
+          }
+        });
+      }
+    });
+
+    return issues;
+  }
+
+  private checkMissingSemicolons(_code: string, lines: string[]): Issue[] {
+    const issues: Issue[] = [];
 
     lines.forEach((line, index) => {
       const trimmed = line.trim();
       const lineNumber = index + 1;
-
-      // Check for line length
-      if (line.length > 100) {
-        issues.push({
-          type: 'warning',
-          severity: 'low',
-          message: `Line too long (${line.length} > 100 characters)`,
-          line: lineNumber,
-          rule: 'ESLINT-MAX-LINE-LENGTH',
-        });
-      }
 
       // Check for missing semicolons (basic detection)
       if (trimmed.length > 0 && 
@@ -181,222 +460,103 @@ export class JavaScriptAnalyzer extends BaseCodeAnalyzer {
           !trimmed.startsWith('continue') &&
           !trimmed.includes('=>') &&
           !trimmed.includes('${')) {
-        issues.push({
-          type: 'warning',
-          severity: 'low',
-          message: 'Missing semicolon',
-          line: lineNumber,
-          rule: 'ESLINT-SEMI',
-        });
-      }
-
-      // Check for var usage
-      if (trimmed.includes('var ')) {
-        issues.push({
-          type: 'warning',
-          severity: 'medium',
-          message: 'Use let or const instead of var',
-          line: lineNumber,
-          rule: 'ESLINT-VAR',
-        });
-      }
-
-      // Check for double equals
-      if (trimmed.includes('==') && !trimmed.includes('===') && !trimmed.includes('!=')) {
-        issues.push({
-          type: 'warning',
-          severity: 'medium',
-          message: 'Use === instead of == for strict equality',
-          line: lineNumber,
-          rule: 'ESLINT-EQEQEQ',
-        });
+        issues.push(this.createIssue(
+          'warning',
+          'low',
+          'Missing semicolon',
+          lineNumber,
+          'MISSING_SEMICOLONS',
+          {
+            description: 'Add semicolon at the end of the statement'
+          }
+        ));
       }
     });
 
     return issues;
   }
 
-  private checkJavaScriptComplexity(
-    _code: string, 
-    _lines: string[], 
-    complexity: number, 
-    options: AnalysisOptions
-  ): AnalysisIssue[] {
-    const issues: AnalysisIssue[] = [];
-    const threshold = typeof options.thresholds?.complexity === 'number' 
-      ? options.thresholds.complexity 
-      : options.thresholds?.complexity?.high || 10;
-
-    if (complexity > threshold) {
-      issues.push({
-        type: 'warning',
-        severity: complexity > threshold * 2 ? 'high' : 'medium',
-        message: `Function complexity too high (${complexity} > ${threshold})`,
-        line: 1,
-        rule: 'COMPLEXITY-HIGH',
-        fix: {
-          description: 'Consider breaking down complex function into smaller functions',
-          replacement: 'Extract complex logic into separate functions',
-        },
-      });
-    }
-
-    return issues;
-  }
-
-  private checkJavaScriptBestPractices(_code: string, lines: string[]): AnalysisIssue[] {
-    const issues: AnalysisIssue[] = [];
+  private checkVarUsage(_code: string, lines: string[]): Issue[] {
+    const issues: Issue[] = [];
 
     lines.forEach((line, index) => {
-      const trimmed = line.trim();
-      const lineNumber = index + 1;
-
-      // Check for console.log in production code
-      if (trimmed.includes('console.log') || trimmed.includes('console.error') || trimmed.includes('console.warn')) {
-        issues.push({
-          type: 'warning',
-          severity: 'low',
-          message: 'Console statement found in production code',
-          line: lineNumber,
-          rule: 'ESLINT-NO-CONSOLE',
-        });
-      }
-
-      // Check for eval usage
-      if (trimmed.includes('eval(')) {
-        issues.push({
-          type: 'error',
-          severity: 'high',
-          message: 'eval() usage is dangerous and should be avoided',
-          line: lineNumber,
-          rule: 'ESLINT-NO-EVAL',
-        });
-      }
-
-      // Check for unused variables (basic detection)
-      if (trimmed.match(/(?:let|const|var)\s+\w+/) && !trimmed.includes('=') && !trimmed.endsWith(',')) {
-        const varMatch = trimmed.match(/(?:let|const|var)\s+(\w+)/);
-        if (varMatch) {
-          const varName = varMatch[1];
-          // Simple check - in real implementation would need full AST parsing
-          if (!_code.includes(`${varName}=`) && !_code.includes(`${varName}.`) && !_code.includes(`${varName}[`)) {
-            issues.push({
-              type: 'warning',
-              severity: 'medium',
-              message: `Variable '${varName}' appears to be unused`,
-              line: lineNumber,
-              rule: 'ESLINT-NO-UNUSED-VARS',
-            });
+      if (line.includes('var ')) {
+        issues.push(this.createIssue(
+          'warning',
+          'medium',
+          'Use let or const instead of var',
+          index + 1,
+          'NO_VAR_USAGE',
+          {
+            description: 'Replace var with let or const for better scoping'
           }
-        }
-      }
-
-      // Check for nested ternary operators
-      if (trimmed.includes('?') && trimmed.split('?').length > 2) {
-        issues.push({
-          type: 'warning',
-          severity: 'medium',
-          message: 'Nested ternary operators reduce readability',
-          line: lineNumber,
-          rule: 'ESLINT-NESTED-TERNARY',
-        });
+        ));
       }
     });
 
     return issues;
   }
 
-  private generateJavaScriptSuggestions(
-    code: string, 
-    _lines: string[], 
-    metrics: CodeMetrics
-  ): RefactoringSuggestion[] {
-    const suggestions: RefactoringSuggestion[] = [];
+  private checkEvalUsage(_code: string, lines: string[]): Issue[] {
+    const issues: Issue[] = [];
 
-    // Use metrics to make informed suggestions
-    if (metrics.complexity > 15) {
-      suggestions.push({
-        type: 'restructure',
-        priority: 'high',
-        description: 'Consider breaking down complex function into smaller functions',
-        line: 1,
-        estimatedImpact: {
-          complexityReduction: metrics.complexity * 0.3,
-          maintainabilityImprovement: 20,
-        },
-      });
-    }
+    lines.forEach((line, index) => {
+      if (line.includes('eval(')) {
+        issues.push(this.createIssue(
+          'error',
+          'high',
+          'eval() usage is dangerous and should be avoided',
+          index + 1,
+          'NO_EVAL_USAGE',
+          {
+            description: 'Replace eval() with safer alternatives'
+          }
+        ));
+      }
+    });
 
-    // Suggest async/await for Promise chains
-    const promiseChains = (code.match(/\.then\(/g) || []).length;
-    if (promiseChains > 1) {
-      suggestions.push({
-        type: 'restructure',
-        priority: 'medium',
-        description: 'Consider using async/await instead of Promise chains for better readability',
-        line: 1,
-        estimatedImpact: {
-          maintainabilityImprovement: 15,
-        },
-      });
-    }
+    return issues;
+  }
 
-    // Suggest destructuring for object property access
-    const dotNotations = (code.match(/\w+\.\w+/g) || []).length;
-    if (dotNotations > 2) {
-      suggestions.push({
-        type: 'optimize',
-        priority: 'low',
-        description: 'Consider using destructuring assignment for cleaner object property access',
-        line: 1,
-        estimatedImpact: {
-          maintainabilityImprovement: 10,
-        },
-      });
-    }
+  private checkStrictEquality(_code: string, lines: string[]): Issue[] {
+    const issues: Issue[] = [];
 
-    // Suggest template literals over string concatenation
-    const concatenations = (code.match(/\+\s*['"]/g) || []).length;
-    if (concatenations > 1) {
-      suggestions.push({
-        type: 'optimize',
-        priority: 'low',
-        description: 'Use template literals instead of string concatenation',
-        line: 1,
-        estimatedImpact: {
-          maintainabilityImprovement: 8,
-        },
-      });
-    }
+    lines.forEach((line, index) => {
+      if (line.includes('==') && !line.includes('===') && !line.includes('!=')) {
+        issues.push(this.createIssue(
+          'warning',
+          'medium',
+          'Use === instead of == for strict equality',
+          index + 1,
+          'STRICT_EQUALITY',
+          {
+            description: 'Use strict equality operators (===, !==)'
+          }
+        ));
+      }
+    });
 
-    // Suggest arrow functions for simple callbacks
-    const functionKeywords = (code.match(/function\s*\(/g) || []).length;
-    if (functionKeywords > 0) {
-      suggestions.push({
-        type: 'optimize',
-        priority: 'low',
-        description: 'Consider using arrow functions for simple callbacks',
-        line: 1,
-        estimatedImpact: {
-          maintainabilityImprovement: 5,
-        },
-      });
-    }
+    return issues;
+  }
 
-    // Suggest array methods for loops
-    const forLoops = (code.match(/for\s*\([^)]*\)\s*\{/g) || []).length;
-    if (forLoops > 0) {
-      suggestions.push({
-        type: 'restructure',
-        priority: 'medium',
-        description: 'Consider using array methods (map, filter, reduce) instead of for loops',
-        line: 1,
-        estimatedImpact: {
-          maintainabilityImprovement: 12,
-        },
-      });
-    }
+  private checkConsoleStatements(_code: string, lines: string[]): Issue[] {
+    const issues: Issue[] = [];
 
-    return suggestions;
+    lines.forEach((line, index) => {
+      if (line.includes('console.log') || line.includes('console.error') || line.includes('console.warn')) {
+        issues.push(this.createIssue(
+          'warning',
+          'low',
+          'Console statement found in production code',
+          index + 1,
+          'NO_CONSOLE_STATEMENTS',
+          {
+            description: 'Remove console statements from production code'
+          }
+        ));
+      }
+    });
+
+    return issues;
   }
 }

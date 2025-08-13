@@ -119,7 +119,7 @@ export abstract class BaseCodeAnalyzer {
     const extension = filePath.split('.').pop()?.toLowerCase();
     if (!extension) return null;
 
-    for (const language of this.supportedLanguages.values()) {
+    for (const language of Array.from(this.supportedLanguages.values())) {
       if (language.extensions.includes(extension)) {
         return language;
       }

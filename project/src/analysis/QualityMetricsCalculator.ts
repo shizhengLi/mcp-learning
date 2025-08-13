@@ -564,7 +564,7 @@ export class QualityMetricsCalculator {
       matches.push(match[1] || match[2] || match[3]);
     }
     
-    return [...new Set(matches)];
+    return Array.from(new Set(matches));
   }
 
   private estimateBasicTechnicalDebt(code: string, _language: string): number {
@@ -865,7 +865,6 @@ export class QualityMetricsCalculator {
 
   private calculateErrorHandlingScore(code: string, _language: string): number {
     let score = 100;
-    const lines = code.split('\n');
     
     // Check for try-catch blocks
     const tryCatchCount = (code.match(/\btry\b/g) || []).length;
@@ -873,7 +872,6 @@ export class QualityMetricsCalculator {
     
     // Check for error handling patterns
     const errorChecks = (code.match(/\bif\s*\(.*error\b/gi) || []).length;
-    const throwsStatements = (code.match(/\bthrow\b/g) || []).length;
     
     // Deduct for missing error handling
     if (tryCatchCount === 0) score -= 20;
@@ -885,7 +883,6 @@ export class QualityMetricsCalculator {
 
   private calculateResourceManagementScore(code: string, _language: string): number {
     let score = 100;
-    const lines = code.split('\n');
     
     // Check for resource management patterns
     const fileOperations = (code.match(/\b(new\s+)?File(Input|Output|Reader|Writer)\b/g) || []).length;

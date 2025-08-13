@@ -1,4 +1,4 @@
-import { QualityMetrics, TechnicalDebtItem, QualityRecommendation, QualityThresholds } from './QualityMetricsCalculator';
+import { QualityMetrics, TechnicalDebtItem, QualityRecommendation } from './QualityMetricsCalculator';
 
 export interface TechnicalDebtAnalysis {
   totalDebt: number;
@@ -101,22 +101,22 @@ export class TechnicalDebtAnalyzer {
     qualityMetrics: QualityMetrics
   ): Promise<TechnicalDebtItem[]> {
     const debtItems: TechnicalDebtItem[] = [];
-    const lines = code.split('\n');
+    const _lines = code.split('\n');
 
     // Code Smells
-    debtItems.push(...this.identifyCodeSmells(code, language, filePath, lines));
+    debtItems.push(...this.identifyCodeSmells(code, language, filePath, _lines));
     
     // Design Issues
     debtItems.push(...this.identifyDesignIssues(code, language, filePath, qualityMetrics));
     
     // Bugs
-    debtItems.push(...this.identifyBugs(code, language, filePath, lines));
+    debtItems.push(...this.identifyBugs(code, language, filePath, _lines));
     
     // Vulnerabilities
-    debtItems.push(...this.identifyVulnerabilities(code, language, filePath, lines));
+    debtItems.push(...this.identifyVulnerabilities(code, language, filePath, _lines));
     
     // Performance Issues
-    debtItems.push(...this.identifyPerformanceIssues(code, language, filePath, lines, qualityMetrics));
+    debtItems.push(...this.identifyPerformanceIssues(code, language, filePath, _lines, qualityMetrics));
 
     return debtItems;
   }
@@ -218,8 +218,8 @@ export class TechnicalDebtAnalyzer {
   }
 
   private identifyDesignIssues(
-    code: string,
-    language: string,
+    _code: string,
+    _language: string,
     filePath: string,
     qualityMetrics: QualityMetrics
   ): TechnicalDebtItem[] {
@@ -265,7 +265,7 @@ export class TechnicalDebtAnalyzer {
     }
 
     // Large classes
-    const classes = this.extractClasses(code, language);
+    const classes = this.extractClasses(_code, _language);
     classes.forEach(cls => {
       if (cls.lines > 300) {
         items.push(this.createDebtItem(
@@ -284,8 +284,8 @@ export class TechnicalDebtAnalyzer {
   }
 
   private identifyBugs(
-    code: string,
-    language: string,
+    _code: string,
+    _language: string,
     filePath: string,
     lines: string[]
   ): TechnicalDebtItem[] {
@@ -351,8 +351,8 @@ export class TechnicalDebtAnalyzer {
   }
 
   private identifyVulnerabilities(
-    code: string,
-    language: string,
+    _code: string,
+    _language: string,
     filePath: string,
     lines: string[]
   ): TechnicalDebtItem[] {
@@ -431,11 +431,11 @@ export class TechnicalDebtAnalyzer {
   }
 
   private identifyPerformanceIssues(
-    code: string,
-    language: string,
+    _code: string,
+    _language: string,
     filePath: string,
     lines: string[],
-    qualityMetrics: QualityMetrics
+    _qualityMetrics: QualityMetrics
   ): TechnicalDebtItem[] {
     const items: TechnicalDebtItem[] = [];
 
@@ -496,7 +496,7 @@ export class TechnicalDebtAnalyzer {
     });
 
     // Algorithmic complexity issues
-    if (qualityMetrics.algorithmicComplexity === 'O(n²)') {
+    if (_qualityMetrics.algorithmicComplexity === 'O(n²)') {
       items.push(this.createDebtItem(
         'performance_issue',
         'medium',
@@ -527,9 +527,9 @@ export class TechnicalDebtAnalyzer {
       description,
       location: {
         file,
-        line,
-        function: this.extractFunctionNameAtLine(file, line),
-        class: this.extractClassNameAtLine(file, line)
+        ...(line !== undefined && { line }),
+        ...(this.extractFunctionNameAtLine(file, line) !== undefined && { function: this.extractFunctionNameAtLine(file, line)! }),
+        ...(this.extractClassNameAtLine(file, line) !== undefined && { class: this.extractClassNameAtLine(file, line)! })
       },
       estimatedFixTime: estimatedFixTime || this.getDefaultFixTime(type, severity),
       interestRate: interestRate || this.interestRates[type],
@@ -663,8 +663,8 @@ export class TechnicalDebtAnalyzer {
 
   private generateDebtRecommendations(
     debtItems: TechnicalDebtItem[],
-    code: string,
-    language: string
+    _code: string,
+    _language: string
   ): QualityRecommendation[] {
     const recommendations: QualityRecommendation[] = [];
 
@@ -759,7 +759,13 @@ export class TechnicalDebtAnalyzer {
     return recommendations;
   }
 
-  private assessDebtRisk(debtItems: TechnicalDebtItem[], qualityMetrics: QualityMetrics) {
+  private assessDebtRisk(debtItems: TechnicalDebtItem[], _qualityMetrics: QualityMetrics): {
+    overall: 'low' | 'medium' | 'high';
+    maintainability: 'low' | 'medium' | 'high';
+    performance: 'low' | 'medium' | 'high';
+    security: 'low' | 'medium' | 'high';
+    reliability: 'low' | 'medium' | 'high';
+  } {
     const criticalCount = debtItems.filter(item => item.severity === 'critical').length;
     const vulnerabilityCount = debtItems.filter(item => item.type === 'vulnerability').length;
     const totalDebt = this.calculateTotalDebt(debtItems);
@@ -798,7 +804,6 @@ export class TechnicalDebtAnalyzer {
   private extractFunctions(code: string, language: string): Array<{ name: string; line: number; complexity: number }> {
     // Simplified function extraction
     const functions: Array<{ name: string; line: number; complexity: number }> = [];
-    const lines = code.split('\n');
     
     const functionPattern = {
       python: /\bdef\s+(\w+)\b/g,
@@ -826,7 +831,7 @@ export class TechnicalDebtAnalyzer {
     return functions;
   }
 
-  private extractClasses(code: string, language: string): Array<{ name: string; line: number; lines: number }> {
+  private extractClasses(_code: string, _language: string): Array<{ name: string; line: number; lines: number }> {
     // Simplified class extraction
     const classes: Array<{ name: string; line: number; lines: number }> = [];
     
@@ -842,13 +847,13 @@ export class TechnicalDebtAnalyzer {
       php: /\bclass\s+(\w+)\b/g
     };
 
-    const pattern = classPattern[language as keyof typeof classPattern] || /\bclass\s+(\w+)\b/g;
+    const pattern = classPattern[_language as keyof typeof classPattern] || /\bclass\s+(\w+)\b/g;
     let match;
 
-    while ((match = pattern.exec(code)) !== null) {
+    while ((match = pattern.exec(_code)) !== null) {
       const name = match[1];
-      const line = code.substring(0, match.index).split('\n').length;
-      const lines = this.estimateClassLines(code, match.index);
+      const line = _code.substring(0, match.index).split('\n').length;
+      const lines = this.estimateClassLines(_code, match.index);
       
       classes.push({ name, line, lines });
     }
@@ -900,12 +905,12 @@ export class TechnicalDebtAnalyzer {
     return code.substring(startIndex, endIndex + 1).split('\n').length;
   }
 
-  private extractFunctionNameAtLine(file: string, line?: number): string | undefined {
+  private extractFunctionNameAtLine(_file: string, _line?: number): string | undefined {
     // Simplified - would need more sophisticated analysis
     return undefined;
   }
 
-  private extractClassNameAtLine(file: string, line?: number): string | undefined {
+  private extractClassNameAtLine(_file: string, _line?: number): string | undefined {
     // Simplified - would need more sophisticated analysis
     return undefined;
   }

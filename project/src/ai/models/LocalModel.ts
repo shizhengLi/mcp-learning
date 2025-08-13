@@ -27,7 +27,7 @@ export class LocalModel implements AIModel {
     return 'local';
   }
 
-  async generate(prompt: string, context?: AIContext): Promise<AIResponse> {
+  async generate(prompt: string, _context?: AIContext): Promise<AIResponse> {
     try {
       const response = await fetch(`${this.endpoint}/api/generate`, {
         method: 'POST',
@@ -49,7 +49,7 @@ export class LocalModel implements AIModel {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data: OllamaResponse = await response.json();
+      const data = await response.json() as OllamaResponse;
       const suggestions = this.parseSuggestionsFromResponse(data.response);
 
       return {
@@ -76,7 +76,7 @@ export class LocalModel implements AIModel {
       }
 
       // Check if the specific model is available
-      const tagsResponse = await response.json();
+      const tagsResponse = await response.json() as { models: any[] };
       const models = tagsResponse.models || [];
       const modelExists = models.some((model: any) => model.name === this.config.model);
 
@@ -233,7 +233,7 @@ export class LocalModel implements AIModel {
         return [];
       }
 
-      const data = await response.json();
+      const data = await response.json() as { models: any[] };
       return data.models?.map((model: any) => model.name) || [];
     } catch (error) {
       console.warn('Error getting available models:', error);

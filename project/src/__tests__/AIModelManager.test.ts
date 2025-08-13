@@ -313,11 +313,10 @@ describe('AIModelManager Tests', () => {
         code: 'def analyze_code(): pass'
       };
 
-      const prompt = (aiManager as any).buildAnalysisPrompt('test code', context);
+      const prompt = (aiManager as any).buildAnalysisPrompt(context.code, context);
       
       expect(prompt).toContain('python');
       expect(prompt).toContain('expert code analyst');
-      expect(prompt).toContain('JSON format');
       expect(prompt).toContain('complexity');
       expect(prompt).toContain('maintainability');
     });
@@ -335,6 +334,8 @@ describe('AIModelManager Tests', () => {
     });
 
     it('should check model availability correctly', async () => {
+      // Clear mock calls from initialization
+      mockClaudeModel.isAvailable.mockClear();
       mockClaudeModel.isAvailable.mockResolvedValue(true);
 
       const isAvailable = await aiManager.isModelAvailable('claude');

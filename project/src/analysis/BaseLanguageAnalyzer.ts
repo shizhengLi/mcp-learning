@@ -32,10 +32,23 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     this.extensions = extensions;
     this.defaultRules = defaultRules;
     this.config = config;
+    
+    // Register this language in the supported languages map
+    this.registerLanguage({
+      name: language,
+      extensions,
+      analyze: async (_code: string, filePath: string, options: AnalysisOptions) => {
+        return this.analyzeFile(filePath, options);
+      }
+    });
   }
 
   public override getSupportedLanguages(): string[] {
     return [this.language];
+  }
+
+  public override isLanguageSupported(language: string): boolean {
+    return language === this.language;
   }
 
   public getDefaultRules(): string[] {
@@ -120,7 +133,8 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
 
   protected parseBasicMetrics(code: string): CodeMetrics {
     const lines = code.split('\n');
-    const totalLines = lines.length;
+    const nonEmptyLines = lines.filter(line => line.trim().length > 0);
+    const linesOfCode = nonEmptyLines.length;
     const commentLines = lines.filter(line => 
       line.trim().startsWith('//') || 
       line.trim().startsWith('#') || 
@@ -133,28 +147,28 @@ export abstract class BaseLanguageAnalyzer extends BaseCodeAnalyzer {
     const structure = this.analyzeCodeStructure(code);
     const complexity = this.calculateComplexity(code);
     const maintainability = this.calculateMaintainability({
-      linesOfCode: totalLines,
+      linesOfCode,
       complexity,
       maintainability: 0,
       commentLines,
-      commentPercentage: totalLines > 0 ? (commentLines / totalLines) * 100 : 0,
+      commentPercentage: linesOfCode > 0 ? (commentLines / linesOfCode) * 100 : 0,
       functionCount: structure.functions.length,
       averageFunctionLength: structure.functions.length > 0 
-        ? totalLines / structure.functions.length 
+        ? linesOfCode / structure.functions.length 
         : 0,
       dependencies: structure.imports,
       technicalDebt: 0
     });
 
     return {
-      linesOfCode: totalLines,
+      linesOfCode,
       complexity,
       maintainability,
       commentLines,
-      commentPercentage: totalLines > 0 ? (commentLines / totalLines) * 100 : 0,
+      commentPercentage: linesOfCode > 0 ? (commentLines / linesOfCode) * 100 : 0,
       functionCount: structure.functions.length,
       averageFunctionLength: structure.functions.length > 0 
-        ? totalLines / structure.functions.length 
+        ? linesOfCode / structure.functions.length 
         : 0,
       dependencies: structure.imports,
       technicalDebt: 0

@@ -30,7 +30,7 @@ export class CodeAnalysisServer {
   private aiModelManager: AIModelManager;
   private config: ServerConfig;
 
-  constructor() {
+  constructor(autoInitialize: boolean = true) {
     this.config = {
       name: 'code-analysis-server',
       version: '1.0.0',
@@ -260,7 +260,9 @@ export class CodeAnalysisServer {
     this.multiLanguageFramework.setAnalyzer('typescript', this.typescriptAnalyzer);
     this.multiLanguageFramework.setAnalyzer('java', this.javaAnalyzer);
     
-    this.initializeTools();
+    if (autoInitialize) {
+      this.initializeTools();
+    }
   }
 
   private async initializeTools(): Promise<void> {
@@ -457,26 +459,7 @@ export class CodeAnalysisServer {
       }
     );
 
-    // Tool for getting supported languages
-    this.server.tool(
-      'get-supported-languages',
-      'Get list of supported programming languages',
-      {},
-      async () => {
-        const languages = [
-          ...this.pythonAnalyzer.getSupportedLanguages(),
-          ...this.javascriptAnalyzer.getSupportedLanguages()
-        ];
-
-        return {
-          content: [{
-            type: 'text',
-            text: `Supported languages: ${languages.join(', ')}`
-          }]
-        };
-      }
-    );
-
+  
     // Tool for AI-powered code analysis
     this.server.tool(
       'ai-analyze-code',
@@ -1084,13 +1067,15 @@ class ExampleClass {
   }
 }
 
-// Start the server
-async function main() {
-  const server = new CodeAnalysisServer();
-  await server.start();
-}
+// Start the server only when run directly
+if (require.main === module) {
+  async function main() {
+    const server = new CodeAnalysisServer();
+    await server.start();
+  }
 
-main().catch(error => {
-  console.error('Failed to start Code Analysis Server:', error);
-  process.exit(1);
-});
+  main().catch(error => {
+    console.error('Failed to start Code Analysis Server:', error);
+    process.exit(1);
+  });
+}

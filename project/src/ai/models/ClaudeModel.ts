@@ -16,7 +16,7 @@ export class ClaudeModel implements AIModel {
     return 'claude';
   }
 
-  async generate(prompt: string, context?: AIContext): Promise<AIResponse> {
+  async generate(prompt: string, _context?: AIContext): Promise<AIResponse> {
     try {
       const response = await this.client.messages.create({
         model: this.config.model || 'claude-3-sonnet-20240229',
@@ -30,7 +30,7 @@ export class ClaudeModel implements AIModel {
         ]
       });
 
-      const content = response.content[0].text;
+      const content = response.content[0].type === 'text' ? response.content[0].text : '';
       const suggestions = this.parseSuggestionsFromResponse(content);
 
       return {

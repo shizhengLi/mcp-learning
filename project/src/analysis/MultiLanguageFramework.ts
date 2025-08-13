@@ -444,10 +444,14 @@ export class MultiLanguageFramework {
     return this.languages.has(language);
   }
 
-  private getAnalyzer(_language: string): BaseCodeAnalyzer | null {
-    // This would be implemented to dynamically load analyzers
-    // For now, return null to indicate analyzer needs to be set
-    return null;
+  private getAnalyzer(language: string): BaseCodeAnalyzer | null {
+    const config = this.getLanguageConfig(language);
+    if (!config || !config.analyzer) {
+      return null;
+    }
+    
+    // Create a new instance of the analyzer
+    return new config.analyzer();
   }
 
   setAnalyzer(language: string, analyzer: BaseCodeAnalyzer): void {

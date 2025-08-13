@@ -17,7 +17,7 @@ export class OpenAIModel implements AIModel {
     return 'gpt';
   }
 
-  async generate(prompt: string, context?: AIContext): Promise<AIResponse> {
+  async generate(prompt: string, _context?: AIContext): Promise<AIResponse> {
     try {
       const response = await this.client.chat.completions.create({
         model: this.config.model || 'gpt-4-turbo',

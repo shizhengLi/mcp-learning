@@ -76,7 +76,8 @@ setTimeout(() => {
       // Server should exit automatically after 1 second
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      expect(serverProcess.killed).toBe(true);
+      // Check if process has exited (not necessarily killed)
+      expect(serverProcess.killed || serverProcess.exitCode !== null).toBe(true);
       
       // Clean up test server file
       if (existsSync(serverPath)) {
@@ -100,7 +101,7 @@ setTimeout(() => {
 
   describe('End-to-End Code Analysis Workflow', () => {
     it('should analyze Python code and return structured results', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const pythonCode = `
 def calculate_fibonacci(n):
@@ -140,7 +141,7 @@ if __name__ == "__main__":
     }, testTimeout);
 
     it('should analyze JavaScript code and return structured results', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const jsCode = `
 function fibonacci(n) {
@@ -187,7 +188,7 @@ main();
     }, testTimeout);
 
     it('should handle code analysis errors gracefully', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const invalidCode = `
 def invalid_function(
@@ -216,7 +217,7 @@ def invalid_function(
 
   describe('Multi-File Analysis Integration', () => {
     it('should analyze multiple files and return aggregated results', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const testFiles = [
         createTestFile('test1.py', `
@@ -262,12 +263,12 @@ def function2():
       // Test the formatting function
       const formattedOutput = (server as any).formatMultipleAnalysisResults(results);
       expect(formattedOutput).toContain('Multiple Files Analysis Results');
-      expect(formattedOutput).toContain('Files Analyzed: 3');
+      expect(formattedOutput).toContain('**Files Analyzed:** 3');
       expect(formattedOutput).toContain('Total Lines of Code:');
     }, testTimeout);
 
     it('should handle mixed file types correctly', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const mixedFiles = [
         createTestFile('test.py', 'print("Python code")'),
@@ -308,7 +309,7 @@ def function2():
 
   describe('Refactoring Suggestions Integration', () => {
     it('should generate refactoring suggestions for complex code', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const complexCode = `
 def process_data(data):
@@ -377,7 +378,7 @@ def calculate_metrics(values):
     }, testTimeout);
 
     it('should handle refactoring suggestions with context', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const codeWithContext = `
 function validateUserInput(input) {
@@ -414,7 +415,7 @@ function validateUserInput(input) {
 
   describe('Error Handling and Edge Cases', () => {
     it('should handle empty code input', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const result = await (server as any).analyzeInMemoryCode(
         (server as any).pythonAnalyzer,
@@ -429,7 +430,7 @@ function validateUserInput(input) {
     }, testTimeout);
 
     it('should handle very large code files', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       // Generate a large code file
       const largeCode = Array(1000).fill(`
@@ -452,7 +453,7 @@ def large_function_${Math.random()}():
     }, testTimeout);
 
     it('should handle concurrent analysis requests', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const concurrentRequests = Array(5).fill(null).map((_, i) => 
         (server as any).analyzeInMemoryCode(
@@ -473,7 +474,7 @@ def large_function_${Math.random()}():
 
   describe('Language Detection Integration', () => {
     it('should correctly detect Python files from various extensions', () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const pythonFiles = [
         'test.py',
@@ -489,43 +490,65 @@ def large_function_${Math.random()}():
     });
 
     it('should correctly detect JavaScript files from various extensions', () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const jsFiles = [
         'test.js',
         'app.jsx',
-        'component.ts',
-        'page.tsx',
         '/path/to/script.js'
       ];
       
+      const tsFiles = [
+        'component.ts',
+        'page.tsx'
+      ];
+      
+      // Test JavaScript files
       jsFiles.forEach(filePath => {
         const language = (server as any).detectLanguageFromPath(filePath);
         expect(language).toBe('javascript');
       });
+      
+      // Test TypeScript files
+      tsFiles.forEach(filePath => {
+        const language = (server as any).detectLanguageFromPath(filePath);
+        expect(language).toBe('typescript');
+      });
     });
 
     it('should return null for unsupported file types', () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const unsupportedFiles = [
-        'test.java',
-        'file.cpp',
-        'script.rb',
-        'code.go',
+        'test.xml',
+        'config.json',
+        'style.css',
         'unknown.xyz'
       ];
       
+      const supportedFiles = [
+        'test.java',
+        'file.cpp',
+        'script.rb',
+        'code.go'
+      ];
+      
+      // Test truly unsupported files
       unsupportedFiles.forEach(filePath => {
         const language = (server as any).detectLanguageFromPath(filePath);
         expect(language).toBeNull();
       });
-    });
+      
+      // Test actually supported files
+      supportedFiles.forEach(filePath => {
+        const language = (server as any).detectLanguageFromPath(filePath);
+        expect(language).not.toBeNull();
+      });
   });
 
   describe('Performance Metrics Integration', () => {
     it('should calculate performance metrics for code analysis', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const startTime = Date.now();
       
@@ -549,7 +572,7 @@ def large_function_${Math.random()}():
     }, testTimeout);
 
     it('should handle performance under load', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const loadTestRequests = Array(20).fill(null).map((_, i) => 
         (server as any).analyzeInMemoryCode(
@@ -569,5 +592,6 @@ def large_function_${Math.random()}():
       expect(totalTime).toBeLessThan(5000); // Should complete within 5 seconds
       expect(results.every(r => r.language === 'python')).toBe(true);
     }, testTimeout);
+  });
   });
 });

@@ -25,7 +25,7 @@ describe('AI-Enhanced CodeAnalysisServer Integration Tests', () => {
 
   describe('AI Model Integration', () => {
     it('should initialize AI model manager without errors', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       // Test that the server was created successfully
       expect(server).toBeDefined();
@@ -36,7 +36,7 @@ describe('AI-Enhanced CodeAnalysisServer Integration Tests', () => {
     }, testTimeout);
 
     it('should handle AI analysis tool calls gracefully', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const pythonCode = `
 def fibonacci(n):
@@ -82,7 +82,7 @@ print(f"Result: {result}")
       delete process.env.OLLAMA_ENDPOINT;
 
       try {
-        server = new CodeAnalysisServer();
+        server = new CodeAnalysisServer(false);
         
         const jsCode = `
 function calculateTotal(items) {
@@ -115,7 +115,7 @@ function calculateTotal(items) {
 
   describe('AI Analysis Tool Features', () => {
     it('should format AI analysis results correctly', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const mockTraditionalResult = {
         filePath: 'test.py',
@@ -191,7 +191,7 @@ function calculateTotal(items) {
     }, testTimeout);
 
     it('should handle AI-only analysis mode', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const mockAIInsights = {
         issues: [],
@@ -226,7 +226,7 @@ function calculateTotal(items) {
     }, testTimeout);
 
     it('should handle traditional-only analysis mode', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const mockTraditionalResult = {
         filePath: 'test.js',
@@ -266,7 +266,7 @@ function calculateTotal(items) {
 
   describe('Performance and Reliability', () => {
     it('should handle concurrent AI analysis requests', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const requests = Array(3).fill(null).map((_, i) => 
         (server as any).analyzeInMemoryCode(
@@ -292,12 +292,12 @@ function calculateTotal(items) {
     }, testTimeout);
 
     it('should handle large code files with AI analysis', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
-      // Generate a large code file
-      const largeCode = Array(100).fill(`
-def large_function_${Math.random()}():
-    # This is part of a large function
+      // Generate a large code file with more than 1000 lines
+      const largeCode = Array(150).fill((index: number) => `
+def large_function_${index}():
+    # This is part of a large function ${index}
     data = []
     for i in range(100):
         if i % 2 == 0:
@@ -305,7 +305,14 @@ def large_function_${Math.random()}():
         else:
             data.append(i + 1)
     return sum(data)
-`).join('\n');
+
+def another_function_${index}():
+    # Additional function to increase line count
+    result = 0
+    for j in range(50):
+        result += j
+    return result
+`).map((func, index) => func(index)).join('\n\n');
 
       const result = await (server as any).analyzeInMemoryCode(
         (server as any).pythonAnalyzer,
@@ -321,7 +328,7 @@ def large_function_${Math.random()}():
 
   describe('Error Scenarios', () => {
     it('should handle invalid code gracefully', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const invalidCode = `
 def invalid_function(
@@ -347,7 +354,7 @@ def invalid_function(
     }, testTimeout);
 
     it('should handle empty code input', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const result = await (server as any).analyzeInMemoryCode(
         (server as any).pythonAnalyzer,
@@ -362,7 +369,7 @@ def invalid_function(
     }, testTimeout);
 
     it('should handle unsupported language gracefully', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       // This should not crash, even though we don't have a Java analyzer
       try {
@@ -384,7 +391,7 @@ def invalid_function(
 
   describe('Integration with Existing Features', () => {
     it('should maintain compatibility with existing analysis tools', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const pythonCode = `
 def calculate_average(numbers):
@@ -415,7 +422,7 @@ def calculate_average(numbers):
     }, testTimeout);
 
     it('should preserve existing formatting functionality', async () => {
-      server = new CodeAnalysisServer();
+      server = new CodeAnalysisServer(false);
       
       const mockResult = {
         filePath: 'test.js',
