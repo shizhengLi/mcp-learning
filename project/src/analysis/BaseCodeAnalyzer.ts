@@ -45,14 +45,14 @@ export interface RefactoringSuggestion {
 }
 
 export interface AnalysisOptions {
-  rules?: string[];
+  rules?: string[] | undefined;
   thresholds?: {
-    complexity?: number;
-    maintainability?: number;
-    coverage?: number;
-  };
-  includeSuggestions?: boolean;
-  skipDependencies?: boolean;
+    complexity?: number | undefined;
+    maintainability?: number | undefined;
+    coverage?: number | undefined;
+  } | undefined;
+  includeSuggestions?: boolean | undefined;
+  skipDependencies?: boolean | undefined;
 }
 
 export interface LanguageSupport {
