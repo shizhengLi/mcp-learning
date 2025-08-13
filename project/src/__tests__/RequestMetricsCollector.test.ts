@@ -284,6 +284,8 @@ describe('RequestMetricsCollector', () => {
 
   describe('Active Requests', () => {
     it('should track active request duration', () => {
+      jest.useFakeTimers();
+      
       const requestId = 'req-123';
       const request = { method: 'GET', path: '/test' };
 
@@ -291,11 +293,13 @@ describe('RequestMetricsCollector', () => {
       
       // Wait a bit
       const startDelay = 10;
-      setTimeout(() => {
-        const activeRequests = collector.getActiveRequests();
-        expect(activeRequests).toHaveLength(1);
-        expect(activeRequests[0].duration).toBeGreaterThanOrEqual(startDelay);
-      }, startDelay);
+      jest.advanceTimersByTime(startDelay);
+      
+      const activeRequests = collector.getActiveRequests();
+      expect(activeRequests).toHaveLength(1);
+      expect(activeRequests[0].duration).toBeGreaterThanOrEqual(startDelay);
+      
+      jest.useRealTimers();
     });
 
     it('should handle multiple active requests', () => {

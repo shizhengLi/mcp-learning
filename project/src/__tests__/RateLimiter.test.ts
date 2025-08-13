@@ -44,27 +44,25 @@ describe('RateLimiter', () => {
     });
 
     it('should reset limit after window expires', async () => {
+      let mockTime = 0;
+      const timeProvider = () => mockTime;
+      
       const request = { ip: '192.168.1.1' };
-
-      // Use up all requests
-      for (let i = 0; i < 5; i++) {
-        await rateLimiter.checkLimit(request);
-      }
 
       // Create a rate limiter with very short window
       const shortConfig = {
         ...config,
         windowMs: 100, // 100ms
       };
-      const shortRateLimiter = new RateLimiter(shortConfig);
+      const shortRateLimiter = new RateLimiter(shortConfig, timeProvider);
 
-      // Use up all requests
+      // Use up all requests at time 0
       for (let i = 0; i < 5; i++) {
         await shortRateLimiter.checkLimit(request);
       }
 
-      // Wait for window to expire
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // Advance time past window expiration
+      mockTime = 300;
 
       // Should allow requests again
       const result = await shortRateLimiter.checkLimit(request);
@@ -197,20 +195,23 @@ describe('RateLimiter', () => {
     });
 
     it('should cleanup expired entries', async () => {
+      let mockTime = 0;
+      const timeProvider = () => mockTime;
+      
       const shortConfig = {
         ...config,
         windowMs: 50, // 50ms
       };
-      const shortRateLimiter = new RateLimiter(shortConfig);
+      const shortRateLimiter = new RateLimiter(shortConfig, timeProvider);
 
-      // Create entries for different IPs
+      // Create entries for different IPs at time 0
       await shortRateLimiter.checkLimit({ ip: '192.168.1.1' });
       await shortRateLimiter.checkLimit({ ip: '192.168.1.2' });
 
       expect(shortRateLimiter.getStats().totalKeys).toBe(2);
 
-      // Wait for window to expire
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Advance time past window expiration
+      mockTime = 200;
 
       // Cleanup should remove expired entries
       shortRateLimiter.cleanup();

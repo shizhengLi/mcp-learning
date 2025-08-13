@@ -33,7 +33,7 @@ export class RequestMetricsCollector {
       userAgent: request.headers?.['user-agent'],
       ip: request.ip || request.connection?.remoteAddress,
       success: !error && (response?.statusCode || 500) < 400,
-      error,
+      ...(error && { error }),
     };
 
     this.requestHistory.push(metrics);

@@ -15,16 +15,20 @@ export interface RateLimitConfig {
 export class RateLimiter {
   protected config: RateLimitConfig;
   private store: Map<string, RateLimitEntry> = new Map();
+  protected timeProvider: () => number = () => Date.now();
 
-  constructor(config: RateLimitConfig) {
+  constructor(config: RateLimitConfig, timeProvider?: () => number) {
     this.config = {
       windowMs: config.windowMs,
       maxRequests: config.maxRequests,
       keyGenerator: config.keyGenerator || this.defaultKeyGenerator,
       skipSuccessfulRequests: config.skipSuccessfulRequests || false,
       skipFailedRequests: config.skipFailedRequests || false,
-      onLimitReached: config.onLimitReached,
+      ...(config.onLimitReached && { onLimitReached: config.onLimitReached }),
     };
+    if (timeProvider) {
+      this.timeProvider = timeProvider;
+    }
   }
 
   public async checkLimit(request: any): Promise<{
@@ -34,7 +38,7 @@ export class RateLimiter {
     total: number;
   }> {
     const key = this.config.keyGenerator!(request);
-    const now = Date.now();
+    const now = this.timeProvider();
     const windowStart = now - this.config.windowMs;
 
     let entry = this.store.get(key);
@@ -48,13 +52,14 @@ export class RateLimiter {
     }
 
     const isAllowed = entry.count < this.config.maxRequests;
-    const remaining = Math.max(0, this.config.maxRequests - entry.count);
 
     if (isAllowed) {
       entry.count++;
     } else if (this.config.onLimitReached) {
       this.config.onLimitReached(key, entry);
     }
+
+    const remaining = Math.max(0, this.config.maxRequests - entry.count);
 
     return {
       allowed: isAllowed,
@@ -89,7 +94,7 @@ export class RateLimiter {
   }
 
   public cleanup(): void {
-    const now = Date.now();
+    const now = this.timeProvider();
     const windowStart = now - this.config.windowMs;
 
     for (const [key, entry] of this.store.entries()) {
@@ -104,7 +109,7 @@ export class RateLimiter {
     activeKeys: number;
     memoryUsage: string;
   } {
-    const now = Date.now();
+    const now = this.timeProvider();
     const windowStart = now - this.config.windowMs;
     let activeKeys = 0;
 
@@ -163,7 +168,7 @@ export class SlidingWindowRateLimiter extends RateLimiter {
     total: number;
   }> {
     const key = this.config.keyGenerator!(request);
-    const now = Date.now();
+    const now = this.timeProvider();
     const windowStart = now - this.config.windowMs;
 
     let log = this.requestLog.get(key) || [];
@@ -197,7 +202,7 @@ export class SlidingWindowRateLimiter extends RateLimiter {
   }
 
   public override cleanup(): void {
-    const now = Date.now();
+    const now = this.timeProvider();
     const windowStart = now - this.config.windowMs;
 
     for (const [key, log] of this.requestLog.entries()) {

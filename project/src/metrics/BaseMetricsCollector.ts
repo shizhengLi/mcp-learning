@@ -41,7 +41,7 @@ export class BaseMetricsCollector implements MetricsCollector {
       description: `Counter for ${name}`,
       type: 'counter',
       value: 0,
-      tags,
+      ...(tags && { tags }),
     };
 
     counter.value += value;
@@ -57,7 +57,7 @@ export class BaseMetricsCollector implements MetricsCollector {
       description: `Gauge for ${name}`,
       type: 'gauge',
       value,
-      tags,
+      ...(tags && { tags }),
     };
 
     this.gauges.set(key, gauge);
@@ -73,7 +73,7 @@ export class BaseMetricsCollector implements MetricsCollector {
       description: `Timer for ${name}`,
       type: 'timer',
       duration,
-      tags,
+      ...(tags && { tags }),
     };
 
     timers.push(timer);
@@ -94,8 +94,8 @@ export class BaseMetricsCollector implements MetricsCollector {
       buckets: this.config.buckets,
       count: 0,
       sum: 0,
-      values: [],
-      tags,
+      values: [] as number[],
+      ...(tags && { tags }),
     };
 
     histogram.count++;
@@ -295,7 +295,7 @@ export class BaseMetricsCollector implements MetricsCollector {
 
     // Clean up old timers
     for (const [key, timers] of this.timers.entries()) {
-      const recentTimers = timers.filter(timer => {
+      const recentTimers = timers.filter(_timer => {
         // We don't have timestamp on timers, so we'll keep them all for now
         // In a real implementation, timers would have timestamps
         return true;

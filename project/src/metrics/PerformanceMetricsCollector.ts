@@ -29,7 +29,7 @@ export class PerformanceMetricsCollector {
   stopCollection(): void {
     if (this.intervalId) {
       clearInterval(this.intervalId);
-      this.intervalId = undefined;
+      this.intervalId = null as unknown as NodeJS.Timeout;
     }
   }
 
