@@ -390,6 +390,15 @@ class AIModelManager {
 - 智能文档系统
 - 自动化工具集成
 
+## 测试
+
+```bash
+npm test
+npm run typecheck
+npm run lint
+
+```
+
 ## 总结
 
 MCP协议学习项目通过理论分析、案例研究和实践开发，全面深入地掌握了Model Context Protocol的核心概念和高级应用。项目不仅包括对优秀实现的分析学习，还包含了构建高级MCP应用的实践经验，为未来在AI驱动的开发工具领域的工作奠定了坚实基础。

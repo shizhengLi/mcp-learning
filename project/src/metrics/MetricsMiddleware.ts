@@ -7,8 +7,8 @@ export interface MetricsMiddlewareConfig {
   enableRequestMetrics: boolean;
   enableResponseMetrics: boolean;
   enablePerformanceMetrics: boolean;
-  trackHeaders: boolean[];
-  trackQueries: boolean[];
+  trackHeaders: string[];
+  trackQueries: string[];
   excludePaths: string[];
   sampleRate: number;
   slowRequestThreshold: number;
@@ -96,7 +96,7 @@ export class MetricsMiddleware {
           duration,
           timestamp: Date.now(),
           userId: (req as any).user?.userId,
-          userAgent: req.headers['user-agent'],
+          userAgent: req.headers['user-agent'] as string | undefined,
           ip: req.ip,
           success: false,
           error: err.message,
@@ -151,16 +151,17 @@ export class MetricsMiddleware {
   private wrapResponseMethods(res: Response, requestId: string, req: Request, startTime: number): void {
     const originalEnd = res.end;
     const originalJson = res.json;
+    const self = this;
 
-    res.end = function(this: Response, ...args: any[]) {
-      const metrics = this.trackResponseCompletion(requestId, req, this, startTime);
-      return originalEnd.apply(this, args);
+    (res as any).end = function(this: Response, chunk: any, encoding?: any, cb?: (() => void)) {
+      self.trackResponseCompletion(requestId, req, this, startTime);
+      return originalEnd.call(this, chunk, encoding, cb);
     };
 
-    res.json = function(this: Response, ...args: any[]) {
-      const metrics = this.trackResponseCompletion(requestId, req, this, startTime);
-      return originalJson.apply(this, args);
-    }.bind(this);
+    (res as any).json = function(this: Response, body?: any) {
+      self.trackResponseCompletion(requestId, req, this, startTime);
+      return originalJson.call(this, body);
+    };
   }
 
   private trackResponseCompletion(
@@ -182,7 +183,7 @@ export class MetricsMiddleware {
       duration,
       timestamp: Date.now(),
       userId: (req as any).user?.userId,
-      userAgent: req.headers['user-agent'],
+      userAgent: req.headers['user-agent'] as string | undefined,
       ip: req.ip,
       success: res.statusCode < 400,
     };
@@ -241,8 +242,8 @@ export class MetricsMiddleware {
   }
 
   // Utility middleware to track specific routes
-  trackRoute(routePath: string): (req: Request, res: Response, next: NextFunction) => void {
-    return (req: Request, res: Response, next: NextFunction) => {
+  trackRoute(routePath: string): (req: Request, _res: Response, next: NextFunction) => void {
+    return (req: Request, _res: Response, next: NextFunction) => {
       this.baseCollector.incrementCounter('route_hits', 1, {
         route: routePath,
         method: req.method,
@@ -252,8 +253,8 @@ export class MetricsMiddleware {
   }
 
   // Middleware to track authentication metrics
-  trackAuth(): (req: Request, res: Response, next: NextFunction) => void {
-    return (req: Request, res: Response, next: NextFunction) => {
+  trackAuth(): (req: Request, _res: Response, next: NextFunction) => void {
+    return (req: Request, _res: Response, next: NextFunction) => {
       if ((req as any).user) {
         this.baseCollector.incrementCounter('auth_success', 1, {
           userId: (req as any).user.userId,
@@ -271,22 +272,23 @@ export class MetricsMiddleware {
     return (req: Request, res: Response, next: NextFunction) => {
       // This would be called by the rate limiter when a limit is reached
       const originalStatus = res.status;
-      res.status = function(this: Response, code: number) {
+      const self = this;
+      (res as any).status = function(this: Response, code: number) {
         if (code === 429) {
-          this.baseCollector.incrementCounter('rate_limit_exceeded', 1, {
-            ip: req.ip,
+          self.baseCollector.incrementCounter('rate_limit_exceeded', 1, {
+            ip: req.ip || 'unknown',
             path: req.path,
           });
         }
         return originalStatus.call(this, code);
-      }.bind(this);
+      };
       next();
     };
   }
 
   // Health check middleware
   healthCheck(): (req: Request, res: Response, next: NextFunction) => void {
-    return (req: Request, res: Response, next: NextFunction) => {
+    return (_req: Request, res: Response, _next: NextFunction) => {
       const startTime = Date.now();
       
       // Get current metrics for health check
@@ -304,7 +306,7 @@ export class MetricsMiddleware {
         requestRate: serverMetrics.requests.rate,
         errorRate: serverMetrics.errors.rate,
         avgResponseTime: serverMetrics.responseTime.avg,
-        memoryUsage: latestPerformance?.value || 0,
+        memoryUsage: (latestPerformance as any)?.value || 0,
         responseTime: Date.now() - startTime,
       };
 

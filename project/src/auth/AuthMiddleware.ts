@@ -1,4 +1,4 @@
-import { BaseAuth, AuthConfig, AuthContext, AuthRequest, AuthResult } from './BaseAuth';
+import { AuthConfig, AuthContext, AuthRequest, AuthResult } from './BaseAuth';
 import { JWTAuth } from './JWTAuth';
 import { APIKeyAuth } from './APIKeyAuth';
 import { RateLimiter, RateLimitConfig } from './RateLimiter';
@@ -109,14 +109,14 @@ export class AuthMiddleware {
 
   public createCORSMiddleware() {
     if (!this.config.enableCORS) {
-      return (_req: any, res: any, next: any) => next();
+      return (_req: any, _res: any, next: any) => next();
     }
 
-    return (req: any, res: any, next: any) => {
-      const origin = req.headers.origin;
+    return (_req: any, res: any, next: any) => {
+      const origin = _req.headers.origin;
       
-      if (this.config.auth.allowedOrigins.includes('*') || 
-          (origin && this.config.auth.allowedOrigins.includes(origin))) {
+      if (this.config.auth.allowedOrigins?.includes('*') || 
+          (origin && this.config.auth.allowedOrigins?.includes(origin))) {
         res.header('Access-Control-Allow-Origin', origin || '*');
       }
 
@@ -124,7 +124,7 @@ export class AuthMiddleware {
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Api-Key');
       res.header('Access-Control-Allow-Credentials', 'true');
 
-      if (req.method === 'OPTIONS') {
+      if (_req.method === 'OPTIONS') {
         res.sendStatus(200);
         return;
       }
@@ -134,7 +134,7 @@ export class AuthMiddleware {
   }
 
   public createSecurityHeadersMiddleware() {
-    return (req: any, res: any, next: any) => {
+    return (_req: any, res: any, next: any) => {
       res.header('X-Content-Type-Options', 'nosniff');
       res.header('X-Frame-Options', 'DENY');
       res.header('X-XSS-Protection', '1; mode=block');

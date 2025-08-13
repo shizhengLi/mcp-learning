@@ -49,8 +49,8 @@ export interface RequestMetrics {
   duration: number;
   timestamp: number;
   userId?: string;
-  userAgent?: string;
-  ip?: string;
+  userAgent?: string | undefined;
+  ip?: string | undefined;
   success: boolean;
   error?: string;
 }

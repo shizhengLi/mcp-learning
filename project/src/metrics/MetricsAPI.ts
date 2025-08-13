@@ -23,14 +23,12 @@ export class MetricsAPI {
   }
 
   // Get all metrics
-  getAllMetrics(req: Request, res: Response): void {
+  getAllMetrics(_req: Request, res: Response): void {
     try {
       const metrics = this.baseCollector.getMetrics();
-      const serverMetrics = this.baseCollector.getServerMetrics();
       
       res.json({
         metrics,
-        serverMetrics,
         timestamp: Date.now(),
         count: metrics.length,
       });
@@ -102,7 +100,7 @@ export class MetricsAPI {
   }
 
   // Get server metrics
-  getServerMetrics(req: Request, res: Response): void {
+  getServerMetrics(_req: Request, res: Response): void {
     try {
       const serverMetrics = this.baseCollector.getServerMetrics();
       
@@ -157,7 +155,7 @@ export class MetricsAPI {
   }
 
   // Get active requests
-  getActiveRequests(req: Request, res: Response): void {
+  getActiveRequests(_req: Request, res: Response): void {
     try {
       const activeRequests = this.requestCollector.getActiveRequests();
       
@@ -275,7 +273,7 @@ export class MetricsAPI {
   }
 
   // Get performance alerts
-  getPerformanceAlerts(req: Request, res: Response): void {
+  getPerformanceAlerts(_req: Request, res: Response): void {
     try {
       const alerts = this.performanceCollector.getAlerts();
       
@@ -293,7 +291,7 @@ export class MetricsAPI {
   }
 
   // Get system info
-  getSystemInfo(req: Request, res: Response): void {
+  getSystemInfo(_req: Request, res: Response): void {
     try {
       const systemInfo = this.performanceCollector.getSystemInfo();
       
@@ -338,7 +336,7 @@ export class MetricsAPI {
   }
 
   // Reset metrics
-  resetMetrics(req: Request, res: Response): void {
+  resetMetrics(_req: Request, res: Response): void {
     try {
       this.baseCollector.reset();
       this.requestCollector.clearHistory();
@@ -358,7 +356,7 @@ export class MetricsAPI {
   }
 
   // Health check
-  healthCheck(req: Request, res: Response): void {
+  healthCheck(_req: Request, res: Response): void {
     try {
       const serverMetrics = this.baseCollector.getServerMetrics();
       const activeRequests = this.requestCollector.getActiveRequestCount();
@@ -397,7 +395,6 @@ export class MetricsAPI {
     try {
       const timeRange = req.query.timeRange ? parseInt(req.query.timeRange as string) : 3600000;
       
-      const serverMetrics = this.baseCollector.getServerMetrics();
       const requestStats = this.requestCollector.getRequestStats(timeRange);
       const performanceAggregated = this.performanceCollector.getAggregatedMetrics(timeRange);
       const alerts = this.performanceCollector.getAlerts();
