@@ -2,6 +2,8 @@
 """
 TypeScript代码行数统计脚本
 统计MCP项目中的TypeScript代码行数
+
+python ts_line_counter.py --output code_line_num.txt
 """
 
 import os
@@ -151,6 +153,7 @@ if __name__ == "__main__":
 
 # # 保存到文件
 # python3 ts_line_counter.py --output report.txt
+# python ts_line_counter.py --output code_line_num.txt
 
 # # 指定其他目录
 # python3 ts_line_counter.py --src other_src_dir
